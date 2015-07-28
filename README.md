@@ -78,3 +78,25 @@
 返回具体的文件对象，返回的`Content-Type`是根据文件后缀名对应的`Mime Type`决定的。比如：
 
 `filePath`为`/2015/7/28/12/25/57/1438057557408.jpg`，那么响应的`Content-Type`为`image/jpeg`，具体的`Mime Type`对照请参照：[Mime Type对照表](http://www.w3school.com.cn/media/media_mimeref.asp)
+
+### 3、服务器管理
+
+xheart_fs提供了服务器管理功能。目前暂时只支持服务器的关闭。
+
+```
+[Get] http://ip:port/management
+```
+
+* 参数
+`signal`:`shutdown` 信号
+
+`token`:授权串，生成方式为RSA非对称加密算法，使用[public.keystore公钥串](https://git.oschina.net/gavincook/xheart_fs/blob/master/resources/public.keystore)，对现在的时间（格式为yyyy-MM-dd HH）进行加密，加密后对密文进行Base64加密，由于需要在url上传递，因此还需要将最后的密文进行url编码。伪代码如下：
+`encodeUrl(encodeBase64(encodeByPublicKey('2015-07-28 18')),'utf-8')`
+
+* 返回
+
+`shutdown successfully`
+
+如果没有权限返回：
+
+`Authorize failed`

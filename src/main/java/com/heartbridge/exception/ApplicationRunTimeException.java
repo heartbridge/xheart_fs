@@ -1,4 +1,4 @@
-package com.heartbridge;
+package com.heartbridge.exception;
 
 /**
  * 应用级别的RunTime异常

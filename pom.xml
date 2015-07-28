@@ -38,7 +38,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.heartbridge.FileServer</mainClass>
+                            <mainClass>com.heartbridge.server.FileServer</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

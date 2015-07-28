@@ -1,5 +1,7 @@
-package com.heartbridge;
+package com.heartbridge.server.handler;
 
+import com.heartbridge.utils.FileUtils;
+import com.heartbridge.utils.Images;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
@@ -79,7 +81,6 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, HttpObject msg) throws Exception {
-        //可以判断DefaultLastHttpContent，然后把所有参数存入Map，包括FileUpload
         if (msg instanceof HttpRequest) {
             HttpRequest request = this.request = (HttpRequest) msg;
             //读取文件

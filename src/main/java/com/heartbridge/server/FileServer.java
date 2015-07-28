@@ -1,5 +1,9 @@
-package com.heartbridge;
+package com.heartbridge.server;
 
+import com.heartbridge.utils.FileUtils;
+import com.heartbridge.server.handler.HttpUploadServerHandler;
+import com.heartbridge.utils.KeyHolder;
+import com.heartbridge.server.handler.ServerHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -22,7 +26,7 @@ import java.util.logging.Logger;
  * @author GavinCook
  * @date 2015/7/25 0025
  **/
-public class FileServer {
+public class FileServer implements Server{
 
     private int port = 8585;
 
@@ -34,7 +38,12 @@ public class FileServer {
 
     private static Logger log = Logger.getLogger(FileServer.class.getName());
 
-    public void run() throws InterruptedException {
+    private ChannelFuture channelFuture;
+
+    private KeyHolder keyHolder = new KeyHolder();
+
+    @Override
+    public void start(){
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workGroup = new NioEventLoopGroup();
         ServerBootstrap serverBootstrap = new ServerBootstrap();
@@ -45,20 +54,41 @@ public class FileServer {
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ch.pipeline().addLast(new HttpRequestDecoder());
                         ch.pipeline().addLast(new HttpResponseEncoder());
+                        ch.pipeline().addLast(new ServerHandler(FileServer.this, keyHolder));
                         ch.pipeline().addLast(new HttpUploadServerHandler(baseDir, compressThreshold));
                     }
                 })
                 .option(ChannelOption.SO_BACKLOG, 128)
                 .childOption(ChannelOption.SO_KEEPALIVE, true);
 
-        ChannelFuture f = serverBootstrap.bind(port).sync();
-        log.log(Level.INFO, "file server started success");
-        log.log(Level.INFO, "file server listen on {0}, and use \"{1}\" as base directory, compress threshold is {2}",
-                new String[]{ port+"", baseDir, FileUtils.getReadableFileSize(compressThreshold)});
+        try {
+            channelFuture = serverBootstrap.bind(port).sync();
+            log.log(Level.INFO, "file server started success");
+            log.log(Level.INFO, "file server listen on {0}, and use \"{1}\" as base directory, compress threshold is {2}",
+                    new String[]{port + "", baseDir, FileUtils.getReadableFileSize(compressThreshold)});
+            channelFuture.channel().closeFuture().sync();
+        }catch (InterruptedException e){
+            e.printStackTrace();
+            System.exit(-1);
+        }finally {
+            workGroup.shutdownGracefully();
+            bossGroup.shutdownGracefully();
+        }
+    }
 
-        f.channel().closeFuture().sync();
-        workGroup.shutdownGracefully();
-        bossGroup.shutdownGracefully();
+    @Override
+    public void stop() {
+        channelFuture.channel().close();
+    }
+
+    @Override
+    public String getStartParams() {
+        return null;
+    }
+
+    @Override
+    public String getName() {
+        return "File Server";
     }
 
 
@@ -85,6 +115,6 @@ public class FileServer {
         fileServer.port = Integer.valueOf( m.getOrDefault("port","8585") );
         fileServer.baseDir = m.getOrDefault("basedir","/files/");
         fileServer.compressThreshold = Long.valueOf(m.getOrDefault("threshold","1048576"));//默认压缩阀值1m
-        fileServer.run();
+        fileServer.start();
     }
 }

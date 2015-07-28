@@ -1,4 +1,4 @@
-package com.heartbridge;
+package com.heartbridge.utils;
 
 import java.io.*;
 import java.text.DecimalFormat;

@@ -42,7 +42,13 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
     //文件存储的基础路径
     private String baseDir = File.separator+"files"+File.separator;
 
+    //基础路径的长度，不包含最后一个文件分隔符
+    private int dirPrefixLength = baseDir.length() - 1;
+
     private long threshold = 1024 * 1024;//压缩阀值，1m
+
+    //文件分隔符的正则表达式,用来统一返回数据为http url格式
+    private String fileSeparatorRegex = File.separator.equals("\\") ? "\\\\" : "/";
 
     static {
         DiskFileUpload.deleteOnExitTemporaryFile = false;
@@ -53,10 +59,11 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
 
     public HttpUploadServerHandler(String baseDir, long threshold){
         if(baseDir != null && !"".equals(baseDir.trim())) {
-            this.baseDir = baseDir;
+            this.baseDir = baseDir.replaceAll("[/\\\\]+" , fileSeparatorRegex);
             if(!this.baseDir.endsWith(File.separator)){
                 this.baseDir = this.baseDir + File.separator;
             }
+            this.dirPrefixLength = this.baseDir.length() - 1;
         }
         if(threshold > 0){
             this.threshold = threshold;
@@ -133,7 +140,6 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
                 handlePostMethod();
 
                 if (chunk instanceof LastHttpContent) {
-                    System.out.println(uploads.get(0).get().length);
                     writeResponse(ctx.channel(), saveFiles());
                     reset();
                 }
@@ -325,19 +331,19 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
                     logger.log(Level.INFO, "[compressed default]file saved at {0}", out.getAbsoluteFile());
                 }
 
-                successes.add("originName :"+ fileUpload.getFilename()+
-                        ",fileName:"+out.getName()+
-                        ",filePath:"+ out.getAbsolutePath().substring(baseDir.length()));
+                successes.add("\"originName\" :\""+ fileUpload.getFilename()+
+                        "\",\"fileName\":\""+out.getName()+
+                        "\",\"filePath\":\""+ out.getAbsolutePath().substring(dirPrefixLength)+"\"");
             }catch (Exception e) {
                 logger.log(Level.SEVERE, "exception {0} thrown when save file", e.getMessage());
                 e.printStackTrace();
-                failures.add("originName :"+ fileUpload.getFilename()+
-                        ",errorMsg:"+e.getMessage());
+                failures.add("\"originName\" :\""+ fileUpload.getFilename()+
+                        "\",\"errorMsg\":\""+e.getMessage()+"\"");
             }finally {
                 fileUpload.release();
             }
         }
-        return ("{success:["+successes.toString()+"],failure:["+failures.toString()+"]").replaceAll(File.separator,"/");
+        return ("{success:["+successes.toString()+"],failure:["+failures.toString()+"]}").replaceAll(fileSeparatorRegex,"/");
     }
 
     /**

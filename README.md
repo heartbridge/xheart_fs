@@ -1,4 +1,4 @@
-#xheart 文件服务器(基于netty框架)
+#xheart 文件服务器(基于netty框架 + RSA非对称加密)
 
 ### 安装
 
@@ -90,7 +90,7 @@ xheart_fs提供了服务器管理功能。目前暂时只支持服务器的关�
 * 参数
 `signal`:`shutdown` 信号
 
-`token`:授权串，生成方式为RSA非对称加密算法，使用[public.keystore公钥串](https://git.oschina.net/gavincook/xheart_fs/blob/master/resources/public.keystore)，对现在的时间（格式为yyyy-MM-dd HH）进行加密，加密后对密文进行Base64加密，由于需要在url上传递，因此还需要将最后的密文进行url编码。伪代码如下：
+`token`:授权串，生成方式为RSA非对称加密算法，使用[public.keystore公钥串](https://git.oschina.net/gavincook/xheart_fs/blob/master/src/main/resources/public.keystore)，对现在的时间（格式为yyyy-MM-dd HH）进行加密，加密后对密文进行Base64加密，由于需要在url上传递，因此还需要将最后的密文进行url编码。伪代码如下：
 `encodeUrl(encodeBase64(encodeByPublicKey('2015-07-28 18')),'utf-8')`
 
 * 返回

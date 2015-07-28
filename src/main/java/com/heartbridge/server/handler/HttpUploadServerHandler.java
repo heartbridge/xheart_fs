@@ -304,32 +304,38 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
                 byte[] data = fileUpload.get();
                 File out = FileUtils.getFileNotExists(f);
                 FileUtils.createIfNotExists(out.getAbsolutePath(), false);
-                File originImageFile = FileUtils.createIfNotExists(out.getParent()+File.separator+"origin_"+out.getName(), false);
-                FileUtils.save(data,originImageFile);//保存原图,原图直接保存，避免imageIO读取后变红
-                logger.log(Level.INFO, "[origin]file saved at {0}",originImageFile.getAbsoluteFile());
-                BufferedImage originImage = ImageIO.read(new ByteArrayInputStream(data));
 
-                float quality;
-                if(data.length > threshold){
-                    quality = 0.8f;
-                    originImage = Images.compressImage(originImage, quality);
-                }
+                String contentType = URLConnection.guessContentTypeFromName(fileUpload.getName());
+                if(contentType.contains("images")) {//处理图片
+                    File originImageFile = FileUtils.createIfNotExists(out.getParent() + File.separator + "origin_" + out.getName(), false);
+                    FileUtils.save(data,originImageFile);//保存源文件或者原图,原图直接保存，避免imageIO读取后变红
+                    logger.log(Level.INFO, "[origin]file saved at {0}",originImageFile.getAbsoluteFile());
+                    BufferedImage originImage = ImageIO.read(new ByteArrayInputStream(data));
+                    float quality;
+                    if (data.length > threshold) {
+                        quality = 0.8f;
+                        originImage = Images.compressImage(originImage, quality);
+                    }
 
-                if(isAvatar){//如果是头像需要保存一个200*200的尺寸，并且将200*200设为默认
-                    originImage = Images.toSquare(originImage);//正方形
-                    BufferedImage image200 = Images.scaleImage(originImage,200,200,true,false);
-                    ImageIO.write(image200,"jpg",out);
-                    logger.log(Level.INFO, "[compressed default avatar]file saved at {0}", out.getAbsoluteFile());
+                    if (isAvatar) {//如果是头像需要保存一个200*200的尺寸，并且将200*200设为默认
+                        originImage = Images.toSquare(originImage);//正方形
+                        BufferedImage image200 = Images.scaleImage(originImage, 200, 200, true, false);
+                        ImageIO.write(image200, "jpg", out);
+                        logger.log(Level.INFO, "[compressed default avatar]file saved at {0}", out.getAbsoluteFile());
 
-                    BufferedImage image100 = Images.scaleImage(originImage,100,100,true,false);
-                    File image100File = new File(out.getParentFile(),"100_"+out.getName());
-                    ImageIO.write(image100,"jpg",image100File);
-                    logger.log(Level.INFO, "[compressed avatar]file saved at {0}", image100File.getAbsoluteFile());
+                        BufferedImage image100 = Images.scaleImage(originImage, 100, 100, true, false);
+                        File image100File = new File(out.getParentFile(), "100_" + out.getName());
+                        ImageIO.write(image100, "jpg", image100File);
+                        logger.log(Level.INFO, "[compressed avatar]file saved at {0}", image100File.getAbsoluteFile());
 
-                }else{//否则保存100*100的缩略图，并设为默认
-                    BufferedImage imageScaled = Images.scaleImage(originImage, width, height, true, false);
-                    ImageIO.write(imageScaled,"jpg",out);
-                    logger.log(Level.INFO, "[compressed default]file saved at {0}", out.getAbsoluteFile());
+                    } else {//否则保存100*100的缩略图，并设为默认
+                        BufferedImage imageScaled = Images.scaleImage(originImage, width, height, true, false);
+                        ImageIO.write(imageScaled, "jpg", out);
+                        logger.log(Level.INFO, "[compressed default]file saved at {0}", out.getAbsoluteFile());
+                    }
+                }else{//处理文件
+                    fileUpload.renameTo(out);
+                    logger.log(Level.INFO, "file saved at {0}", out.getAbsoluteFile());
                 }
 
                 successes.add("\"originName\" :\""+ fileUpload.getFilename()+

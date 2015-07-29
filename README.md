@@ -2,6 +2,8 @@
 
 ### 安装
 
+环境依赖：maven + jdk1.8
+
 * `mvn clean package`
 
 ### 启动

@@ -15,6 +15,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -24,7 +25,7 @@ import java.util.logging.Logger;
 /**
  * 文件服务器
  * @author GavinCook
- * @date 2015/7/25 0025
+ * @since  1.0.0
  **/
 public class FileServer implements Server{
 
@@ -36,11 +37,18 @@ public class FileServer implements Server{
     //压缩阀值
     private long compressThreshold;
 
+    //启动参数
+    private String startParams ;
+
+    //启动时间点
+    private LocalDateTime startTime = LocalDateTime.now();
+
     private static Logger log = Logger.getLogger(FileServer.class.getName());
 
     private ChannelFuture channelFuture;
 
     private KeyHolder keyHolder = new KeyHolder();
+
 
     @Override
     public void start(){
@@ -83,7 +91,7 @@ public class FileServer implements Server{
 
     @Override
     public String getStartParams() {
-        return null;
+        return this.startParams;
     }
 
     @Override
@@ -91,9 +99,28 @@ public class FileServer implements Server{
         return "File Server";
     }
 
+    public int getPort() {
+        return port;
+    }
+
+    public String getBaseDir() {
+        return baseDir;
+    }
+
+    public long getCompressThreshold() {
+        return compressThreshold;
+    }
+
+    @Override
+    public LocalDateTime getStartTime() {
+        return this.startTime;
+    }
+
 
     public static void main(String[] args) throws InterruptedException {
         FileServer fileServer = new FileServer();
+        StringBuilder startParam = new StringBuilder();
+        String space = " ";
         Map<String,String> m = new HashMap<>();
         int length = args.length;
         if(length >= 2){
@@ -102,16 +129,19 @@ public class FileServer implements Server{
             }
             for(int i=0;i<length;){
                 String key = args[i++];
+                startParam.append(key).append(space);
                 if(key.startsWith("--")){
-                    m.put(key.substring(2).toLowerCase(), args[i++]);
+                    String value = args[i++];
+                    startParam.append(value).append(space);
+                    m.put(key.substring(2).toLowerCase(), value);
                 }else{
                     i++;
-                    log.log(Level.WARNING,"the parameter {} is invalid,will ignore.",key);
+                    log.log(Level.WARNING,"the parameter {0} is invalid,will ignore.",key);
                 }
-
             }
         }
 
+        fileServer.startParams = startParam.toString();
         fileServer.port = Integer.valueOf( m.getOrDefault("port","8585") );
         fileServer.baseDir = m.getOrDefault("basedir","/files/");
         fileServer.compressThreshold = Long.valueOf(m.getOrDefault("threshold","1048576"));//默认压缩阀值1m

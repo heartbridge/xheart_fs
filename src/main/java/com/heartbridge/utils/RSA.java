@@ -132,10 +132,4 @@ public class RSA {
         return cipher.doFinal(data);
     }
 
-
-    public static void main(String[] args) throws Exception {
-        System.out.println(URLEncoder.encode(encryptBASE64(encryptByPublicKey("2015-07-28 18".getBytes(), "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQChg6GhR0v0syRqZ1OAQIDweU5iQQYL/Ru3r2Bt\n" +
-                "je4tB5jXaqdR0PP5Tc+mXXhm5lW7IvP6Zbp7MRPGhnhqeUg42FxtZrqtL8ODuMnN8SanjqgXyStn\n" +
-                "JRPZyUGn5Pm0r11w35hTwZGYnRdkYGUrk7q4LPcRt0HchaIK5Y1Y2qEL1wIDAQAB")),"utf-8"));
-    }
 }

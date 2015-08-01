@@ -25,24 +25,23 @@ import java.util.logging.Logger;
 
 
 /**
- * 文件服务器
+ * file server
  * @author GavinCook
  * @since  1.0.0
  **/
 public class FileServer implements Server{
 
+    //default port for file server
     private int port = 8585;
 
-    //文件存储的基础位置
     private String baseDir;
 
-    //压缩阀值
     private long compressThreshold;
 
-    //启动参数
+    //start params
     private String startParams ;
 
-    //启动时间点
+    //server start time
     private LocalDateTime startTime = LocalDateTime.now();
 
     private static Logger log = Logger.getLogger(FileServer.class.getName());
@@ -130,7 +129,7 @@ public class FileServer implements Server{
         int length = args.length;
         if(length >= 2){
             if(length%2!=0){
-                length--;//当传入的参数不是偶数个数，忽略最后一个
+                length--;//ignore the last one, when parameters length is odd
             }
             for(int i=0;i<length;){
                 String key = args[i++];

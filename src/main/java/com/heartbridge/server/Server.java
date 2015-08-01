@@ -9,30 +9,30 @@ import java.time.LocalDateTime;
 public interface Server {
 
     /**
-     * 启动
+     * start server
      */
     void start();
 
     /**
-     * 停止
+     * stop server
      */
     void stop();
 
     /**
-     * 获取启动参数
-     * @return 启动参数
+     * get the server's start parameters
+     * @return server's start parameters
      */
     String getStartParams();
 
     /**
-     * 获取服务器名字
-     * @return 服务器名字
+     * get the server's name
+     * @return server's name
      */
     String getName();
 
     /**
-     * 获取服务器启动时间
-     * @return 服务器启动时间
+     * get the server's start time
+     * @return server's start time
      */
     LocalDateTime getStartTime();
 }

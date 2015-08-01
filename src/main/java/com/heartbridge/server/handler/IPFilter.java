@@ -16,7 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * ip filter
+ * ip filter, if the ip blocked, will response with code 403
  * @author GavinCook
  * @since 1.0.0
  **/
@@ -35,8 +35,10 @@ public class IPFilter extends SimpleChannelInboundHandler<ByteBuf> {
     protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
         InetSocketAddress socketAddress = (InetSocketAddress) ctx.channel().remoteAddress();
         byte[] socketAddressBytes = socketAddress.getAddress().getAddress();
+        //get the remote ip, sometimes it is negative, so need  and with 0XFF
         String ip = (socketAddressBytes[0]&0XFF)+"."+(socketAddressBytes[1]&0XFF)
                 +"."+(socketAddressBytes[2]&0XFF)+"."+(socketAddressBytes[3]&0XFF);
+
         if(ipTable.isBlocked(ip)){
             logger.log(Level.INFO, "ip {0} is blocked by ip filter",ip);
             ByteBuf buf = ctx.alloc().buffer();

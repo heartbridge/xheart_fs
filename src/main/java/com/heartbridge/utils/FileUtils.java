@@ -5,30 +5,28 @@ import java.text.DecimalFormat;
 import java.util.Calendar;
 
 /**
- * 文件工具类
+ * file tools
  *
- * @author Gavin
- * @version 1.0
- * @date 2013-2-18
+ * @author GavinCook
+ * @since  1.0.0
  */
 public class FileUtils {
 
     /**
-     * 保存文件
-     *
-     * @param in
-     * @param file
+     * read the data from stream and save into file
+     * @param in the input stream
+     * @param file dest file
      * @throws IOException
      */
-    public static void save(InputStream in, File file) throws IOException {
-        if (!file.exists()) {
+    public static void save(InputStream in,File file) throws IOException{
+        if(!file.exists()){
             file.createNewFile();
         }
         FileOutputStream out = new FileOutputStream(file);
         byte[] data = new byte[10240];
         int length = 0;
-        while ((length = in.read(data)) != -1) {
-            out.write(data, 0, length);
+        while((length=in.read(data))!=-1){
+            out.write(data,0,length);
         }
         out.flush();
         out.close();
@@ -36,14 +34,13 @@ public class FileUtils {
     }
 
     /**
-     * 将字节数组保存到文件
-     *
-     * @param data
-     * @param file
+     * save the byte data into file
+     * @param data file data in byte format
+     * @param file dest file
      * @throws IOException
      */
-    public static void save(byte[] data, File file) throws IOException {
-        if (!file.exists()) {
+    public static void save(byte[] data,File file) throws IOException{
+        if(!file.exists()){
             file.createNewFile();
         }
         FileOutputStream out = new FileOutputStream(file);
@@ -53,10 +50,9 @@ public class FileUtils {
     }
 
     /**
-     * 获取文件后缀名
-     *
-     * @param file
-     * @return
+     * get the extension name
+     * @param file the file
+     * @return the extension name
      */
     public static String getExtname(File file) {
         String name = file.getName();
@@ -68,10 +64,9 @@ public class FileUtils {
     }
 
     /**
-     * 获取文件前缀名
-     *
-     * @param file
-     * @return
+     * get the prefix name of file
+     * @param file the file
+     * @return prefix name
      */
     public static String getPrefixName(File file) {
         String name = file.getName();
@@ -83,12 +78,9 @@ public class FileUtils {
     }
 
     /**
-     * 获取不存在的文件名，以文件所在路径为父目录。如果存在则累加数字。
-     * <p>如：文件名为mypic.png,如果此时文件夹里已经存在同名文件，那么去获取mypic(1).png是否存在，如果存在则继续累加判断，否则返回</p>
-     * <p>注意：最大累加数字为50，如果累加到50依然没有获取到不存在的文件，那么将使用：文件前缀+当前时间+累加基数+后缀名的方式来处理，然后又继续遍历最多50次</p>
-     *
-     * @param file
-     * @return
+     * get the file name that not duplicate with the exist files
+     * @param file the file with origin file
+     * @return the file name that not duplicate with the exist files
      */
     public static File getFileNotExists(File file) {
         String baseDir = file.getParent(),
@@ -98,7 +90,7 @@ public class FileUtils {
         while (file.exists()) {
             duplicatNum++;
             file = new File(baseDir, prefix + "(" + duplicatNum + ")." + extname);
-            if (duplicatNum == 50) {//每种最多循环50次，也就是最多出现xxx(50).png这样的文件
+            if (duplicatNum == 50) {//loop 50 times at most, means there only can exist xxx(50).xx file at most
                 prefix = prefix + System.currentTimeMillis();
                 duplicatNum = 0;
             }
@@ -107,11 +99,10 @@ public class FileUtils {
     }
 
     /**
-     * 创建文件,如果有依赖的父目录不存在，也会自动创建.
-     *
-     * @param path
-     * @param dir
-     * @return
+     * create file, would create parent folder if not exist, someway it like "mkdir -p"
+     * @param path the file path
+     * @param dir is directory or file
+     * @return created file
      * @throws IOException
      */
     public static File createIfNotExists(String path, boolean dir) throws IOException {
@@ -128,34 +119,14 @@ public class FileUtils {
     }
 
     /**
-     * 将输入流数据写入输出流
-     *
-     * @param in
-     * @param out
-     * @throws IOException
-     */
-    public static void write(InputStream in, OutputStream out) throws IOException {
-        try {
-
-            byte[] data = new byte[10240];
-            int length = 0;
-            while ((length = in.read(data)) > -1) {
-                out.write(data, 0, length);
-            }
-        } finally {
-            in.close();
-            out.close();
-        }
-    }
-
-    /**
-     * 根据时间戳和基础路径获取文件夹路径,如
+     * get the timestamp file path under the base directory
+     * like :
      * <code>
      * getTimestampPath("D:/upload")-->D:/upload/2015/02/10/12/25/30/
      * </code>
      *
-     * @param baseDir
-     * @return
+     * @param baseDir the base directory
+     * @return the timestamp file path
      */
     public static String getTimestampPath(String baseDir) {
         Calendar now = Calendar.getInstance();
@@ -172,10 +143,9 @@ public class FileUtils {
     }
 
     /**
-     * 获取带单位的文件大小
-     *
-     * @param size
-     * @return
+     * get the readable file size
+     * @param size the size in bytes
+     * @return the readable file size
      */
     public static String getReadableFileSize(Long size) {
         if (size <= 0) return "0";
@@ -185,9 +155,9 @@ public class FileUtils {
     }
 
     /**
-     * 根据文件名获取后缀名
-     * @param name
-     * @return
+     * get the extension name
+     * @param name the file name
+     * @return extension name
      */
     public static String getExtName(String name){
         int position = name.lastIndexOf(".");

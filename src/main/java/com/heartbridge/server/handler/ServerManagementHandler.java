@@ -21,7 +21,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * 服务器管理
+ * server management handler, contains:
+ * <p>1.shutdown server</p>
+ * <p>1.get server status</p>
+ * it will listener on the uri "/management", there need pass two parameters, <code>signal</code> and <code>token</code>,
+ * signal is the action what you want server do, current support "shutdown" and "status",
+ * while the token is certificate that server check if you have enough permission to operate server. the token is use RSA algorithm,
+ * it need encrypted in follow steps:
+ * <p>1.encrypt current time in format "yyyy-MM-dd HH" with the public key(which store in current project with name:public.keystore)</p>
+ * <p>2.encrypt the result from step 1 in Base64 algorithm</p>
+ * <p>3.last encode the result from result 2 with URLEncoder, cause that we need pass this on http url</p>
  * @author GavinCook
  * @since 1.0.0
  **/
@@ -43,7 +52,7 @@ public class ServerManagementHandler extends SimpleChannelInboundHandler<HttpObj
     protected void channelRead0(ChannelHandlerContext ctx, HttpObject msg) throws Exception {
         if (msg instanceof HttpRequest) {
             HttpRequest request = (HttpRequest) msg;
-            if(request.getUri().startsWith("/management")){//服务器关闭
+            if(request.getUri().startsWith("/management")){
                 QueryStringDecoder decoderQuery = new QueryStringDecoder(request.getUri());
                 Map<String, List<String>> uriAttributes = decoderQuery.parameters();
                 List<String> tokens = uriAttributes.getOrDefault("token", new ArrayList<>());
@@ -59,12 +68,12 @@ public class ServerManagementHandler extends SimpleChannelInboundHandler<HttpObj
                     }
                     String signal = uriAttributes.getOrDefault("signal", new ArrayList<>()).get(0);
                     LocalDateTime localDateTime = LocalDateTime.now();
-                    if(!token.equals(localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH")))){//授权检查
+                    if(!token.equals(localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH")))){//check the authorization
                         authorizeFailed(ctx);
                         return;
                     }
 
-                    if("shutdown".equals(signal)){//关闭服务器
+                    if("shutdown".equals(signal)){//shutdown the server
                         logger.log(Level.INFO, "preparing to stop the server : {0}", server.getName());
                         server.stop();
                         ByteBuf buf = ctx.alloc().buffer();
@@ -73,7 +82,7 @@ public class ServerManagementHandler extends SimpleChannelInboundHandler<HttpObj
                         ChannelFuture future = ctx.channel().writeAndFlush(response);
                         future.addListener(ChannelFutureListener.CLOSE);
                         logger.log(Level.INFO, "stop the server [{0}] successfully", server.getName());
-                    }else if("status".equals(signal)){//查看服务器窗台
+                    }else if("status".equals(signal)){//get the server status
                         ByteBuf buf = ctx.alloc().buffer();
                         StringBuilder responseText = new StringBuilder();
                         responseText.append("启动参数：").append(server.getStartParams()).append("<br/>");
@@ -102,8 +111,8 @@ public class ServerManagementHandler extends SimpleChannelInboundHandler<HttpObj
     }
 
     /**
-     * 授权失败
-     * @param ctx 通道处理器上下文
+     * handle authorized failed, response with status:401
+     * @param ctx the channel handler context
      */
     private void authorizeFailed(ChannelHandlerContext ctx){
         ByteBuf buf = ctx.alloc().buffer();

@@ -5,9 +5,9 @@ import com.heartbridge.exception.ApplicationRunTimeException;
 import java.io.InputStream;
 
 /**
- * 密钥管理器
+ * keystore manager
  * @author GavinCook
- * @date 2015/7/28 0028
+ * @since 1.0.0
  **/
 public class KeyHolder {
 
@@ -15,8 +15,8 @@ public class KeyHolder {
 
     private String privateKey;
     /**
-     * 获取私钥
-     * @return
+     * get the private key
+     * @return the private key
      */
     public String getPrivateKey(){
         if(this.privateKey != null){

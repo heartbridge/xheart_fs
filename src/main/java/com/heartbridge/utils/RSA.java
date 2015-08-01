@@ -2,33 +2,27 @@ package com.heartbridge.utils;
 
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
-import sun.security.jca.JCAUtil;
 
 import javax.crypto.Cipher;
-import java.net.URLEncoder;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
- * @author:Gavin
- * @date 2015/7/28 0028
+ * RSA tools
+ * @author GavinCook
+ * @since 1.0.0
  **/
 public class RSA {
-    private static String KEY_ALGORTHM = "rsa";
+    private static String KEY_ALGORITHM = "rsa";
 
     public static KeyPair initKey() throws Exception {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(KEY_ALGORTHM);
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(KEY_ALGORITHM);
         keyPairGenerator.initialize(1024);
-        KeyPair keyPair = keyPairGenerator.generateKeyPair();
-         return keyPair;
+        return keyPairGenerator.generateKeyPair();
     }
 
     public static String encryptBASE64(byte[] key) throws Exception {
@@ -41,22 +35,21 @@ public class RSA {
 
 
     /**
-     * 私钥加密
-     *
-     * @param data
-     * @param key
-     * @return
+     * encrypt with private key
+     * @param data the data which need encrypted
+     * @param key private key
+     * @return the encrypted data
      * @throws Exception
      */
     public static byte[] encryptByPrivateKey(byte[] data, String key) throws Exception {
-        //解密密钥
+        //decrypt private key
         byte[] keyBytes = decryptBASE64(key);
-        //取私钥
+        //fetch private key
         PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(keyBytes);
-        KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORTHM);
+        KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
         Key privateKey = keyFactory.generatePrivate(pkcs8EncodedKeySpec);
 
-        //对数据加密
+        //encrypt data
         Cipher cipher = Cipher.getInstance(keyFactory.getAlgorithm());
         cipher.init(Cipher.ENCRYPT_MODE, privateKey);
 
@@ -64,22 +57,21 @@ public class RSA {
     }
 
     /**
-     * 私钥解密
-     *
-     * @param data
-     * @param key
-     * @return
+     * decrypt with private key
+     * @param data the data which need decrypted
+     * @param key private key
+     * @return the decrypted data
      * @throws Exception
      */
     public static byte[] decryptByPrivateKey(byte[] data, String key) throws Exception {
-        //解密私钥密钥
+        //decrypt private key
         byte[] keyBytes = decryptBASE64(key);
-        //取私钥
+        //fetch private key
         PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(keyBytes);
-        KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORTHM);
+        KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
         Key privateKey = keyFactory.generatePrivate(pkcs8EncodedKeySpec);
 
-        //对数据解密
+        //decrypt data
         Cipher cipher = Cipher.getInstance(keyFactory.getAlgorithm());
         cipher.init(Cipher.DECRYPT_MODE, privateKey);
 
@@ -87,21 +79,21 @@ public class RSA {
     }
 
     /**
-     * 公钥解密
-     *
-     * @param data
-     * @param key
-     * @return
+     * decrypt with public key
+     * @param data the data which need decrypted
+     * @param key public key
+     * @return the decrypted data
      * @throws Exception
      */
     public static byte[] decryptByPublicKey(byte[] data, String key) throws Exception {
-        //解密公钥密钥
+        //decrypt public key
         byte[] keyBytes = decryptBASE64(key);
+        //fetch public key
         X509EncodedKeySpec x509EncodedKeySpec = new X509EncodedKeySpec(keyBytes);
-        KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORTHM);
+        KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
         Key publicKey = keyFactory.generatePublic(x509EncodedKeySpec);
 
-        //对数据解密
+        //decrypt data
         Cipher cipher = Cipher.getInstance(keyFactory.getAlgorithm());
         cipher.init(Cipher.DECRYPT_MODE, publicKey);
 
@@ -110,22 +102,21 @@ public class RSA {
 
 
     /**
-     * 公钥加密
-     *
-     * @param data
-     * @param key
-     * @return
+     * encrypt with public key
+     * @param data the data which need decrypted
+     * @param key public key
+     * @return the encrypt data
      * @throws Exception
      */
     public static byte[] encryptByPublicKey(byte[] data, String key) throws Exception {
-        //对公钥解密
+        //decrypt public key
         byte[] keyBytes = decryptBASE64(key);
-        //取公钥
+        //fetch public key
         X509EncodedKeySpec x509EncodedKeySpec = new X509EncodedKeySpec(keyBytes);
-        KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORTHM);
+        KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
         Key publicKey = keyFactory.generatePublic(x509EncodedKeySpec);
 
-        //对数据解密
+        //encrypt data
         Cipher cipher = Cipher.getInstance(keyFactory.getAlgorithm());
         cipher.init(Cipher.ENCRYPT_MODE, publicKey);
 

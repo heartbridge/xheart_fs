@@ -25,31 +25,37 @@ import java.util.logging.Logger;
 import static io.netty.buffer.Unpooled.copiedBuffer;
 import static io.netty.handler.codec.http.HttpHeaders.Names.*;
 
+/**
+ * the file upload handler for http request
+ * @author GavinCook
+ * @since 1.0.0
+ */
 public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObject> {
 
     private static final Logger logger = Logger.getLogger(HttpUploadServerHandler.class.getName());
 
     private HttpRequest request;
 
-    //表单参数
+    //the form parameter
     private Map<String,String[]> paramsMap = new HashMap<>();
 
-    //文件参数
+    //the file parameter
     private List<FileUpload> uploads = new ArrayList<>();
 
     private static final HttpDataFactory factory = new DefaultHttpDataFactory(DefaultHttpDataFactory.MINSIZE); // Disk if size exceed
 
     private HttpPostRequestDecoder decoder;
 
-    //文件存储的基础路径
+    //the base directory for storing files
     private String baseDir = File.separator+"files"+File.separator;
 
-    //基础路径的长度，不包含最后一个文件分隔符
+    //the base directory path length, used to substring the full path to an relative path
     private int dirPrefixLength = baseDir.length() - 1;
 
-    private long threshold = 1024 * 1024;//压缩阀值，1m
+    //image compressed threshold
+    private long threshold = 1024 * 1024;
 
-    //文件分隔符的正则表达式,用来统一返回数据为http url格式
+    //file separator regex, used to format the file path into http url pattern
     private String fileSeparatorRegex = File.separator.equals("\\") ? "\\\\" : "/";
 
     static {
@@ -83,7 +89,8 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
     public void channelRead0(ChannelHandlerContext ctx, HttpObject msg) throws Exception {
         if (msg instanceof HttpRequest) {
             HttpRequest request = this.request = (HttpRequest) msg;
-            //读取文件
+
+            //get file from server
             if(request.getMethod().equals(HttpMethod.GET)){
                 FullHttpResponse response=  new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
                 logger.log(Level.INFO, "trying to get file at {0}", request.getUri());
@@ -100,9 +107,9 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
                 return;
             }
 
-            /*文件保存请求*/
+            /*handle the file store request*/
 
-            //处理URL上的参数
+            //handle the url parameter, store them into the <code>paramsMap</code>
             QueryStringDecoder decoderQuery = new QueryStringDecoder(request.getUri());
             Map<String, List<String>> uriAttributes = decoderQuery.parameters();
             for (Map.Entry<String, List<String>> attr: uriAttributes.entrySet()) {
@@ -124,7 +131,7 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
             }
         }
 
-        //post请求下，才有对应的decoder
+        //only Post request will own the decoder
         if (decoder != null) {
             if (msg instanceof HttpContent) {
                 // New chunk is received
@@ -157,13 +164,13 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
     }
 
     /**
-     * 读取请求中的参数，并将数据写入到<code>uploads</code>或者<code>params</code>中
+     * read the Post request, analyze the form parameter and the files parameter
      */
     private void handlePostMethod(){
         while (decoder.hasNext()) {
             InterfaceHttpData data = decoder.next();
             if (data != null) {
-                if (data.getHttpDataType() == InterfaceHttpData.HttpDataType.Attribute) {
+                if (data.getHttpDataType() == InterfaceHttpData.HttpDataType.Attribute) {//handle the form parameter
                     Attribute attribute = (Attribute) data;
                     try {
                         String name = attribute.getName();
@@ -183,7 +190,7 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
                     }finally {
                         data.release();
                     }
-                } else {//处理文件
+                } else {//handle file
                     if (data.getHttpDataType() == InterfaceHttpData.HttpDataType.FileUpload) {
                         FileUpload fileUpload = (FileUpload) data;
                         if(fileUpload.isCompleted()){
@@ -228,8 +235,8 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
     }
 
     /**
-     * 不支持的方法
-     * @param channel 通道
+     * not support the http request
+     * @param channel request channel
      */
     private void unSupportMethod(Channel channel){
         HttpResponse response = response(HttpResponseStatus.METHOD_NOT_ALLOWED);
@@ -239,9 +246,9 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
     }
 
     /**
-     * 根据响应代码构造响应
-     * @param responseStatus 响应代码
-     * @return 根据响应代码构造的响应
+     * construct response with the HttpResponseStatus, and Content-Type in "application/json"
+     * @param responseStatus response status,like 200
+     * @return the response for the <code><responseStatus/code>
      */
     private FullHttpResponse response(HttpResponseStatus responseStatus){
         FullHttpResponse response = new DefaultFullHttpResponse(
@@ -251,8 +258,7 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
     }
 
     /**
-     * 将请求的cookies添加到响应中
-     * @param response 响应
+     * add request cookies to response
      */
     private void addRequestCookiesToResponse(HttpResponse response){
         Set<Cookie> cookies;
@@ -271,21 +277,21 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
     }
 
     /**
-     * 保存请求的文件，返回保存结果
-     * @return 保存的结果
+     * store the files which kept in the <code>uploads</code>
+     * @return
      * <code>
      *     {
      *         success:[
      *           {
-     *               originName:xx,//原始名字
-     *               fileName:xx,//存储的名字
-     *               filePath:xx//存储的相对路径
+     *               originName:xx,//origin file name
+     *               fileName:xx,// name for stored file
+     *               filePath:xx//the file path which not contains the base directory
      *           }
      *         ],
      *         failure:[
      *          {
-     *               originName:xx,//原始名字
-     *               errorMsg:xx//错误信息描述
+     *               originName:xx,//orgin file name
+     *               errorMsg:xx//the error message description
      *           }
      *         ]
      *     }
@@ -306,9 +312,9 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
                 FileUtils.createIfNotExists(out.getAbsolutePath(), false);
 
                 String contentType = URLConnection.guessContentTypeFromName(fileUpload.getName());
-                if(contentType != null && contentType.contains("images")) {//处理图片
+                if(contentType != null && contentType.contains("images")) {//handle image
                     File originImageFile = FileUtils.createIfNotExists(out.getParent() + File.separator + "origin_" + out.getName(), false);
-                    FileUtils.save(data,originImageFile);//保存源文件或者原图,原图直接保存，避免imageIO读取后变红
+                    FileUtils.save(data,originImageFile);//direct save the origin image, avoid red mask when use ImageIO
                     logger.log(Level.INFO, "[origin]file saved at {0}",originImageFile.getAbsoluteFile());
                     BufferedImage originImage = ImageIO.read(new ByteArrayInputStream(data));
                     float quality;
@@ -317,8 +323,8 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
                         originImage = Images.compressImage(originImage, quality);
                     }
 
-                    if (isAvatar) {//如果是头像需要保存一个200*200的尺寸，并且将200*200设为默认
-                        originImage = Images.toSquare(originImage);//正方形
+                    if (isAvatar) {//compress a 200*200 thumbnail, and set it as default if current image is avatar
+                        originImage = Images.toSquare(originImage);
                         BufferedImage image200 = Images.scaleImage(originImage, 200, 200, true, false);
                         ImageIO.write(image200, "jpg", out);
                         logger.log(Level.INFO, "[compressed default avatar]file saved at {0}", out.getAbsoluteFile());
@@ -328,12 +334,12 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
                         ImageIO.write(image100, "jpg", image100File);
                         logger.log(Level.INFO, "[compressed avatar]file saved at {0}", image100File.getAbsoluteFile());
 
-                    } else {//否则保存100*100的缩略图，并设为默认
+                    } else {//compress 100*100 thumbnail, set the thumbnail as default
                         BufferedImage imageScaled = Images.scaleImage(originImage, width, height, true, false);
                         ImageIO.write(imageScaled, "jpg", out);
                         logger.log(Level.INFO, "[compressed default]file saved at {0}", out.getAbsoluteFile());
                     }
-                }else{//处理文件
+                }else{//handle other files
                     fileUpload.renameTo(out);
                     logger.log(Level.INFO, "file saved at {0}", out.getAbsoluteFile());
                 }
@@ -354,9 +360,7 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
     }
 
     /**
-     * 将文件写到响应中
-     * @param response 响应
-     * @param file 文件对象
+     * write file in response, return back to client
      */
     private void writeFileToResponse(FullHttpResponse response , File file){
         String contentType = URLConnection.guessContentTypeFromName(file.getName());

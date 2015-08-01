@@ -1,9 +1,9 @@
 package com.heartbridge.exception;
 
 /**
- * 应用级别的RunTime异常
- * @author:Gavin
- * @date 9/15/2014
+ * the application runtime exception, used to wrap the compile exception in application
+ * @author GavinCook
+ * @since  1.0.0
  */
 public class ApplicationRunTimeException extends RuntimeException{
 

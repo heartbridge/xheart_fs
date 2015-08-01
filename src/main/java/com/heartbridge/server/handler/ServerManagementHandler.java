@@ -25,15 +25,15 @@ import java.util.logging.Logger;
  * @author GavinCook
  * @since 1.0.0
  **/
-public class ServerHandler extends SimpleChannelInboundHandler<HttpObject> {
+public class ServerManagementHandler extends SimpleChannelInboundHandler<HttpObject> {
 
-    private Logger logger =  Logger.getLogger(ServerHandler.class.getName());
+    private Logger logger =  Logger.getLogger(ServerManagementHandler.class.getName());
 
     private Server server;
 
     private KeyHolder keyHolder;
 
-    public ServerHandler(Server server, KeyHolder keyHolder){
+    public ServerManagementHandler(Server server, KeyHolder keyHolder){
         super(false);
         this.server = server;
         this.keyHolder = keyHolder;

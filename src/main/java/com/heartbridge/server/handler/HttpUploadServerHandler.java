@@ -306,7 +306,7 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
                 FileUtils.createIfNotExists(out.getAbsolutePath(), false);
 
                 String contentType = URLConnection.guessContentTypeFromName(fileUpload.getName());
-                if(contentType.contains("images")) {//处理图片
+                if(contentType != null && contentType.contains("images")) {//处理图片
                     File originImageFile = FileUtils.createIfNotExists(out.getParent() + File.separator + "origin_" + out.getName(), false);
                     FileUtils.save(data,originImageFile);//保存源文件或者原图,原图直接保存，避免imageIO读取后变红
                     logger.log(Level.INFO, "[origin]file saved at {0}",originImageFile.getAbsoluteFile());

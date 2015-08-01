@@ -1,9 +1,11 @@
 package com.heartbridge.server;
 
+import com.heartbridge.server.handler.IPFilter;
 import com.heartbridge.utils.FileUtils;
 import com.heartbridge.server.handler.HttpUploadServerHandler;
+import com.heartbridge.utils.IPTable;
 import com.heartbridge.utils.KeyHolder;
-import com.heartbridge.server.handler.ServerHandler;
+import com.heartbridge.server.handler.ServerManagementHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -49,6 +51,8 @@ public class FileServer implements Server{
 
     private KeyHolder keyHolder = new KeyHolder();
 
+    //ip table for filter ip
+    private IPTable ipTable = new IPTable();
 
     @Override
     public void start(){
@@ -60,9 +64,10 @@ public class FileServer implements Server{
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
+                        ch.pipeline().addLast(new IPFilter(FileServer.this.ipTable));
                         ch.pipeline().addLast(new HttpRequestDecoder());
                         ch.pipeline().addLast(new HttpResponseEncoder());
-                        ch.pipeline().addLast(new ServerHandler(FileServer.this, keyHolder));
+                        ch.pipeline().addLast(new ServerManagementHandler(FileServer.this, keyHolder));
                         ch.pipeline().addLast(new HttpUploadServerHandler(baseDir, compressThreshold));
                     }
                 })
@@ -142,9 +147,21 @@ public class FileServer implements Server{
         }
 
         fileServer.startParams = startParam.toString();
-        fileServer.port = Integer.valueOf( m.getOrDefault("port","8585") );
-        fileServer.baseDir = m.getOrDefault("basedir","/files/");
-        fileServer.compressThreshold = Long.valueOf(m.getOrDefault("threshold","1048576"));//默认压缩阀值1m
+        fileServer.port = Integer.valueOf(m.getOrDefault("port", "8585"));
+        fileServer.baseDir = m.getOrDefault("basedir", "/files/");
+        fileServer.compressThreshold = Long.valueOf(m.getOrDefault("threshold", "1048576"));//默认压缩阀值1m
+
+        //handle the ip rule, see IPTable for detail
+        String allowRegex = m.get("allow");
+        String denyRegex = m.get("deny");
+        if(allowRegex != null){
+            fileServer.ipTable.allow(allowRegex);
+        }
+
+        if(denyRegex != null){
+            fileServer.ipTable.deny(denyRegex);
+        }
+
         fileServer.start();
     }
 }

@@ -1,5 +1,6 @@
 package com.heartbridge.server;
 
+import com.heartbridge.server.extension.ExtensionLoader;
 import com.heartbridge.server.handler.IPFilter;
 import com.heartbridge.utils.FileUtils;
 import com.heartbridge.server.handler.HttpUploadServerHandler;
@@ -53,6 +54,8 @@ public class FileServer implements Server{
     //ip table for filter ip
     private IPTable ipTable = new IPTable();
 
+    private ExtensionLoader extensionLoader = new ExtensionLoader();
+
     @Override
     public void start(){
         EventLoopGroup bossGroup = new NioEventLoopGroup();
@@ -63,9 +66,12 @@ public class FileServer implements Server{
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
+
+
                         ch.pipeline().addLast(new IPFilter(FileServer.this.ipTable));
                         ch.pipeline().addLast(new HttpRequestDecoder());
                         ch.pipeline().addLast(new HttpResponseEncoder());
+                        extensionLoader.load().forEach(handler-> ch.pipeline().addLast(handler));
                         ch.pipeline().addLast(new ServerManagementHandler(FileServer.this, keyHolder));
                         ch.pipeline().addLast(new HttpUploadServerHandler(baseDir, compressThreshold));
                     }
@@ -149,6 +155,10 @@ public class FileServer implements Server{
         fileServer.port = Integer.valueOf(m.getOrDefault("port", "8585"));
         fileServer.baseDir = m.getOrDefault("basedir", "/files/");
         fileServer.compressThreshold = Long.valueOf(m.getOrDefault("threshold", "1048576"));//默认压缩阀值1m
+
+        if(m.get("pulgin-conf") != null) {
+            fileServer.extensionLoader.setConfFilePath(m.get("pulgin-conf"));
+        }
 
         //handle the ip rule, see IPTable for detail
         String allowRegex = m.get("allow");

@@ -142,3 +142,12 @@ xheart_fs提供了服务器管理功能。
 1、首先检查是否有黑名单（deny）设置，如果有黑名单设置，将访问IP和黑名单规则进行匹配，如果匹配成功，则直接返回`403`状态，如果没有匹配成功或者没有黑名单设置，则跳转到第二步。
 
 2、如果设置了白名单（allow），则进行白名单规则匹配，如果匹配成功则继续交给下一个处理器处理，否则返回`403`状态。如果没有设置白名单，把请求直接交给下一个处理器。
+
+### 扩展
+xheart 文件服务器支持插件扩展，可以自定义通道处理器(ChannelHandler)，从而自定义处理流程。只需要简单几步即可完成插件装配：
+
+* 在文件服务器当前目录（xheart_fs-1.0.0-jar-with-dependencies.jar所在目录），创建一个extension的目录
+
+* 编写自定义通道处理器，注意：必须为ChannelHandler的子类型。如：`com.heartbridge.plugin.QRCodeGenerator extends SimpleChannelInboundHandler`。然后将class放入extension目录或其他classpath路径
+
+* 并在extension目录中创建配置文件：`plugin.conf`，在配置文件中配置对应的需要加载的通道处理器的类全名。可以注册多个通道处理器，一个处理器类名一行即可。

@@ -18,6 +18,9 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 
+import java.io.File;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -153,12 +156,19 @@ public class FileServer implements Server{
 
         fileServer.startParams = startParam.toString();
         fileServer.port = Integer.valueOf(m.getOrDefault("port", "8585"));
-        fileServer.baseDir = m.getOrDefault("basedir", "/files/");
+        fileServer.baseDir = new File(m.getOrDefault("basedir", "/files/")).getAbsolutePath()+File.separator;
         fileServer.compressThreshold = Long.valueOf(m.getOrDefault("threshold", "1048576"));//默认压缩阀值1m
 
         if(m.get("pulgin-conf") != null) {
             fileServer.extensionLoader.setConfFilePath(m.get("pulgin-conf"));
         }
+
+        Map<String,Object> serverParams = new HashMap<>();
+        serverParams.put("port",fileServer.port);
+        serverParams.put("basedir",fileServer.baseDir);
+        serverParams.put("threshold",fileServer.compressThreshold);
+        serverParams.put("start-params",fileServer.startParams);
+        fileServer.extensionLoader.setServerParams(serverParams);
 
         //handle the ip rule, see IPTable for detail
         String allowRegex = m.get("allow");
@@ -171,6 +181,13 @@ public class FileServer implements Server{
             fileServer.ipTable.deny(denyRegex);
         }
 
+        ClassLoader cl = FileServer.class.getClassLoader();
+
+        URL[] urls = ((URLClassLoader)cl).getURLs();
+
+        for(URL url: urls){
+            System.out.println(url.getFile());
+        }
         fileServer.start();
     }
 }

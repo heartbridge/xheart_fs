@@ -55,6 +55,58 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>truezip-maven-plugin</artifactId>
+                <version>1.1</version>
+                <executions>
+                    <execution>
+                        <id>remove-a-file-in-sub-archive</id>
+                        <goals>
+                            <goal>remove</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <fileset>
+                                <directory>target/xheart_fs-${project.version}-jar-with-dependencies.jar/META-INF</directory>
+                                <includes>
+                                    <include>INDEX.LIST</include>
+                                </includes>
+                            </fileset>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <id>default-cli</id>
+                        <phase>package</phase>
+                        <configuration>
+                            <target>
+                                <property name="confDir" location="${project.build.directory}/${project.artifactId}${version}/conf" />
+                                <property name="binDir" location="${project.build.directory}/${project.artifactId}${version}/bin" />
+                                <property name="libDir" location="${project.build.directory}/${project.artifactId}${version}/lib" />
+                                <mkdir dir="${confDir}" />
+                                <mkdir dir="${binDir}" />
+                                <mkdir dir="${libDir}" />
+                                <copy file="${io.netty:netty-all:jar}" toDir="${libDir}"/>
+                                <copy file="build/plugin.conf" toDir="${confDir}"/>
+                                <copy file="${project.build.directory}/${project.artifactId}-${project.version}.jar" toFile="${binDir}/${project.artifactId}.jar"/>
+                                <copy file="build/startup.bat" toDir="${binDir}"/>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 

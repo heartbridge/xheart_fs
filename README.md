@@ -6,7 +6,7 @@
 
 * `mvn clean package`
 
-### 启动
+### 快速启动
 
 * `java -jar xheart_fs-1.0.0-jar-with-dependencies.jar`
 
@@ -143,11 +143,15 @@ xheart_fs提供了服务器管理功能。
 
 2、如果设置了白名单（allow），则进行白名单规则匹配，如果匹配成功则继续交给下一个处理器处理，否则返回`403`状态。如果没有设置白名单，把请求直接交给下一个处理器。
 
-### 扩展
-xheart 文件服务器支持插件扩展，可以自定义通道处理器(ChannelHandler)，从而自定义处理流程。只需要简单几步即可完成插件装配：
+### 进阶
+xheart 文件服务器支持插件扩展，可以自定义通道处理器(ChannelHandler)，从而自定义处理流程。
+在使用`mvn clean package`进行构建的时候，在构建目录下会生成一个xheart_fs{version}的文件夹。（version代表版本号，目前版本为1.0.0）
+该目录下有三个文件夹，`bin`，`lib`和`conf`。
 
-* 在文件服务器当前目录（xheart_fs-1.0.0-jar-with-dependencies.jar所在目录），创建一个extension的目录
+* bin: 包含了`startup.bat`和`xheart_fs.jar`,用于启动整个文件服务器，应当始终使用`startup.bat`进行服务器启动。
 
-* 编写自定义通道处理器，注意：必须为ChannelHandler的子类型。如：`com.heartbridge.plugin.QRCodeGenerator extends SimpleChannelInboundHandler`。然后将class放入extension目录或其他classpath路径
+* lib: 其它依赖的jar包都存放在该目录，比如netty依赖包
 
-* 并在extension目录中创建配置文件：`plugin.conf`，在配置文件中配置对应的需要加载的通道处理器的类全名。可以注册多个通道处理器，一个处理器类名一行即可。
+* conf: 配置存放文件夹，目前包含：`plugin.conf`文件，该文件主要用于配置需要加载的插件的具体类名。如果有多个插件类，使用一行一个类名的格式即可。
+
+

@@ -148,7 +148,7 @@ xheart 文件服务器支持插件扩展，可以自定义通道处理器(Channe
 在使用`mvn clean package`进行构建的时候，在构建目录下会生成一个xheart_fs{version}的文件夹。（version代表版本号，目前版本为1.0.0）
 该目录下有三个文件夹，`bin`，`lib`和`conf`。
 
-* bin: 包含了`startup.bat`和`xheart_fs.jar`,用于启动整个文件服务器，应当始终使用`startup.bat`进行服务器启动。
+* bin: 包含了`startup.bat`、`startup.sh`和`xheart_fs.jar`,用于启动整个文件服务器，应当始终使用`startup.bat`或`startup.sh`进行服务器启动。
 
 * lib: 其它依赖的jar包都存放在该目录，比如netty依赖包
 

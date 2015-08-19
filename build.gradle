@@ -1,0 +1,56 @@
+apply plugin: 'java'
+
+defaultTasks 'jar', 'jarWithDependencies', 'server'
+
+rootProject.version = '1.0.0'
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+String serverDir = rootProject.buildDir.getAbsolutePath()+File.separator+rootProject.name+rootProject.version
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'io.netty', name: 'netty-all', version: '4.0.30.Final'
+}
+
+/*build one jar for the classes and all dependencies*/
+task jarWithDependencies(type: Jar) {
+    from sourceSets.main.output.classesDir
+    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    exclude('META-INF/INDEX.LIST')
+    manifest {
+        attributes 'Implementation-Title': 'Gradle Quickstart'
+        attributes 'Implementation-Version': version
+        attributes 'Main-Class': 'com.heartbridge.server.FileServer'
+    }
+    baseName rootProject.name+'-with-dependencies'
+}
+
+/*create server directories*/
+task makeServerDir(dependsOn:'jar'){
+    mkdir(serverDir+File.separator+"bin")
+    mkdir(serverDir+File.separator+"lib")
+    mkdir(serverDir+File.separator+"conf")
+}
+
+task copyBin(type: Copy,dependsOn:'makeServerDir') {
+    from new File(rootProject.buildDir,"libs/"+rootProject.name+"-"+rootProject.version+".jar")
+    from ('build_resources') {
+        exclude '*.conf'
+    }
+    into serverDir+File.separator+"bin"
+}
+
+task copyConf(type: Copy,dependsOn:'copyBin') {
+    from ('build_resources') {
+        include '*.conf'
+    }
+    into serverDir+File.separator+"conf"
+}
+
+task server(type: Copy,dependsOn:'copyConf') {
+    from configurations.compile
+    into serverDir+File.separator+"lib"
+}

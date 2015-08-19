@@ -96,9 +96,10 @@
                                 <mkdir dir="${binDir}" />
                                 <mkdir dir="${libDir}" />
                                 <copy file="${io.netty:netty-all:jar}" toDir="${libDir}"/>
-                                <copy file="build/plugin.conf" toDir="${confDir}"/>
+                                <copy file="build_resources/plugin.conf" toDir="${confDir}"/>
                                 <copy file="${project.build.directory}/${project.artifactId}-${project.version}.jar" toFile="${binDir}/${project.artifactId}.jar"/>
-                                <copy file="build/startup.bat" toDir="${binDir}"/>
+                                <copy file="build_resources/startup.bat" toDir="${binDir}"/>
+                                <copy file="build_resources/startup.sh" toDir="${binDir}"/>
                             </target>
                         </configuration>
                         <goals>

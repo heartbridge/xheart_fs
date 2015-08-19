@@ -16,11 +16,13 @@
 
 `--baseDir`:文件存储的根目录，默认`/files/`
 
-`--threshold`:文件压缩阀值(只对图片生效)，单位为：byte(字节)，默认为：1048576 bytes也即1M.
+`--threshold`:文件压缩阀值(只对图片生效)，单位为：byte(字节)，默认为：1048576 bytes也即1M
 
 `--allow`:允许访问的IP正则表达式，默认无白名单
 
 `--deny`:不允许访问的IP正则表达式，默认无黑名单
+
+亦可以使用`startup.bat --help`或`./startup.sh --help`查看支持的参数
 
 ### 功能说明
 

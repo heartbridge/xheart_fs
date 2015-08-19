@@ -3,4 +3,4 @@
 target/
 */test/
 .gradle
-.build
+build/

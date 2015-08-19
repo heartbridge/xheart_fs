@@ -15,4 +15,4 @@ done
 
 classpath=.:$jars$classpath
 
-exec java -cp $classpath com.heartbridge.server.FileServer
+exec java -cp $classpath com.heartbridge.server.FileServer $*

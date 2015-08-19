@@ -2,9 +2,9 @@
 
 ### 安装
 
-环境依赖：maven + jdk1.8
+环境依赖：maven/gradle + jdk1.8
 
-* `mvn clean package`
+* `mvn clean package` 或 `gradle`
 
 ### 快速启动
 

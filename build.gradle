@@ -25,7 +25,7 @@ task jarWithDependencies(type: Jar) {
         attributes 'Implementation-Version': version
         attributes 'Main-Class': 'com.heartbridge.server.FileServer'
     }
-    baseName rootProject.name+'-with-dependencies'
+    baseName rootProject.name+'-jar-with-dependencies'
 }
 
 /*create server directories*/

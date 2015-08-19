@@ -8,5 +8,5 @@ for %%i in (*.jar) do set jars=!jars!%%~fi;
 
 set classpath=.;!jars!%classpath%
 echo %classpath%
-start java -cp %classpath% com.heartbridge.server.FileServer
+start java -cp %classpath% com.heartbridge.server.FileServer %*
 endlocal

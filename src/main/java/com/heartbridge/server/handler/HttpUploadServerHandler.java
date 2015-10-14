@@ -130,7 +130,7 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
                 return;
             }
         }
-
+        System.out.println(msg);
         //only Post request will own the decoder
         if (decoder != null) {
             if (msg instanceof HttpContent) {
@@ -220,7 +220,7 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
         }
 
         addRequestCookiesToResponse(response);
-
+        response.headers().set("Access-Control-Allow-Origin", "*");
         // Write the response.
         ChannelFuture future = channel.writeAndFlush(response);
         // Close the connection after the write operation is done if necessary.
@@ -254,6 +254,7 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
         FullHttpResponse response = new DefaultFullHttpResponse(
                 HttpVersion.HTTP_1_1, responseStatus);
         response.headers().set(CONTENT_TYPE, "application/json; charset=UTF-8");
+        response.headers().add("Access-Control-Allow-Origin", "*");
         return response;
     }
 
@@ -298,11 +299,13 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
      * </code>
      */
     private String saveFiles(){
-        StringJoiner successes = new StringJoiner(",","{","}");
-        StringJoiner failures = new StringJoiner(",","{","}");
+        StringJoiner successes = new StringJoiner("},{","{","}");
+        StringJoiner failures = new StringJoiner("},{","{","}");
         int width = Integer.valueOf(paramsMap.getOrDefault("width",new String[]{"100"})[0]);
         int height = Integer.valueOf(paramsMap.getOrDefault("height", new String[]{"100"})[0]);
         boolean isAvatar = Boolean.valueOf(paramsMap.getOrDefault("isAvatar", new String[]{"false"})[0]);
+
+        boolean hasSuccess = false , hasFailure = false;
 
         for(FileUpload fileUpload : uploads){
             try{
@@ -343,20 +346,22 @@ public class HttpUploadServerHandler extends SimpleChannelInboundHandler<HttpObj
                     fileUpload.renameTo(out);
                     logger.log(Level.INFO, "file saved at {0}", out.getAbsoluteFile());
                 }
-
+                hasSuccess = true;
                 successes.add("\"originName\" :\""+ fileUpload.getFilename()+
                         "\",\"fileName\":\""+out.getName()+
                         "\",\"filePath\":\""+ out.getAbsolutePath().substring(dirPrefixLength)+"\"");
             }catch (Exception e) {
                 logger.log(Level.SEVERE, "exception {0} thrown when save file", e.getMessage());
                 e.printStackTrace();
+                hasFailure = true;
                 failures.add("\"originName\" :\""+ fileUpload.getFilename()+
                         "\",\"errorMsg\":\""+e.getMessage()+"\"");
             }finally {
                 fileUpload.release();
             }
         }
-        return ("{success:["+successes.toString()+"],failure:["+failures.toString()+"]}").replaceAll(fileSeparatorRegex,"/");
+        return ("{\"success\":["+(hasSuccess ? successes.toString() : "")+"]," +
+                "\"failure\":["+(hasFailure ? failures.toString() : "" )+"]}").replaceAll(fileSeparatorRegex,"/");
     }
 
     /**

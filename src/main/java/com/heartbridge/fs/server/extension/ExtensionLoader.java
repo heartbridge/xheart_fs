@@ -1,4 +1,4 @@
-package com.heartbridge.server.extension;
+package com.heartbridge.fs.server.extension;
 
 import io.netty.channel.ChannelHandler;
 

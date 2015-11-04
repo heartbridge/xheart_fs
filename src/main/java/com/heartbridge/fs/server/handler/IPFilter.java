@@ -1,6 +1,6 @@
-package com.heartbridge.server.handler;
+package com.heartbridge.fs.server.handler;
 
-import com.heartbridge.utils.IPTable;
+import com.heartbridge.fs.utils.IPTable;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;

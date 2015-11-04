@@ -1,4 +1,4 @@
-package com.heartbridge.exception;
+package com.heartbridge.fs.exception;
 
 /**
  * the application runtime exception, used to wrap the compile exception in application

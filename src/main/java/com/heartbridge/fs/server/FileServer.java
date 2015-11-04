@@ -1,12 +1,12 @@
-package com.heartbridge.server;
+package com.heartbridge.fs.server;
 
-import com.heartbridge.server.extension.ExtensionLoader;
-import com.heartbridge.server.handler.IPFilter;
-import com.heartbridge.utils.FileUtils;
-import com.heartbridge.server.handler.HttpUploadServerHandler;
-import com.heartbridge.utils.IPTable;
-import com.heartbridge.utils.KeyHolder;
-import com.heartbridge.server.handler.ServerManagementHandler;
+import com.heartbridge.fs.server.extension.ExtensionLoader;
+import com.heartbridge.fs.server.handler.HandlerDispatcher;
+import com.heartbridge.fs.server.handler.IPFilter;
+import com.heartbridge.fs.server.handler.ServerManagementHandler;
+import com.heartbridge.fs.utils.FileUtils;
+import com.heartbridge.fs.utils.IPTable;
+import com.heartbridge.fs.utils.KeyHolder;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -19,8 +19,6 @@ import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 
 import java.io.File;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +31,7 @@ import java.util.logging.Logger;
  * @author GavinCook
  * @since  1.0.0
  **/
-public class FileServer implements Server{
+public class FileServer implements Server, ServerStartParamsAware{
 
     //default port for file server
     private int port = 8585;
@@ -43,7 +41,7 @@ public class FileServer implements Server{
     private long compressThreshold;
 
     //start params
-    private String startParams ;
+    private Map<String,String> startParams;
 
     //server start time
     private LocalDateTime startTime = LocalDateTime.now();
@@ -52,15 +50,30 @@ public class FileServer implements Server{
 
     private ChannelFuture channelFuture;
 
-    private KeyHolder keyHolder = new KeyHolder();
+
 
     //ip table for filter ip
     private IPTable ipTable = new IPTable();
 
     private ExtensionLoader extensionLoader = new ExtensionLoader();
 
+    private HandlerDispatcher handlerDispatcher = new HandlerDispatcher();
+
     @Override
     public void start(){
+
+
+        String allowRegex = startParams.get("allow");
+        String denyRegex = startParams.get("deny");
+        if(allowRegex != null){
+            ipTable.allow(allowRegex);
+        }
+
+        if(denyRegex != null){
+            ipTable.deny(denyRegex);
+        }
+
+
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workGroup = new NioEventLoopGroup();
         ServerBootstrap serverBootstrap = new ServerBootstrap();
@@ -69,14 +82,11 @@ public class FileServer implements Server{
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
-
-
                         ch.pipeline().addLast(new IPFilter(FileServer.this.ipTable));
                         ch.pipeline().addLast(new HttpRequestDecoder());
                         ch.pipeline().addLast(new HttpResponseEncoder());
-                        extensionLoader.load().forEach(handler-> ch.pipeline().addLast(handler));
-                        ch.pipeline().addLast(new ServerManagementHandler(FileServer.this, keyHolder));
-                        ch.pipeline().addLast(new HttpUploadServerHandler(baseDir, compressThreshold));
+                        ch.pipeline().addLast(handlerDispatcher);
+//                        extensionLoader.load().forEach(handler-> ch.pipeline().addLast(handler));
                     }
                 })
                 .option(ChannelOption.SO_BACKLOG, 128)
@@ -103,7 +113,7 @@ public class FileServer implements Server{
     }
 
     @Override
-    public String getStartParams() {
+    public Map<String,String> getStartParams() {
         return this.startParams;
     }
 
@@ -129,7 +139,6 @@ public class FileServer implements Server{
         return this.startTime;
     }
 
-
     public static void main(String[] args) throws InterruptedException {
         FileServer fileServer = new FileServer();
         StringBuilder startParam = new StringBuilder();
@@ -154,7 +163,6 @@ public class FileServer implements Server{
             }
         }
 
-        fileServer.startParams = startParam.toString();
         fileServer.port = Integer.valueOf(m.getOrDefault("port", "8585"));
         fileServer.baseDir = new File(m.getOrDefault("basedir", "/files/")).getAbsolutePath()+File.separator;
         fileServer.compressThreshold = Long.valueOf(m.getOrDefault("threshold", "1048576"));//默认压缩阀值1m
@@ -167,9 +175,8 @@ public class FileServer implements Server{
         serverParams.put("port",fileServer.port);
         serverParams.put("basedir",fileServer.baseDir);
         serverParams.put("threshold",fileServer.compressThreshold);
-        serverParams.put("start-params",fileServer.startParams);
+        serverParams.put("start-params", fileServer.startParams);
         fileServer.extensionLoader.setServerParams(serverParams);
-
         //handle the ip rule, see IPTable for detail
         String allowRegex = m.get("allow");
         String denyRegex = m.get("deny");
@@ -181,13 +188,32 @@ public class FileServer implements Server{
             fileServer.ipTable.deny(denyRegex);
         }
 
-        ClassLoader cl = FileServer.class.getClassLoader();
-
-        URL[] urls = ((URLClassLoader)cl).getURLs();
-
-        for(URL url: urls){
-            System.out.println(url.getFile());
-        }
+//        ClassLoader cl = FileServer.class.getClassLoader();
+//
+//        URL[] urls = ((URLClassLoader)cl).getURLs();
+//
+//        for(URL url: urls){
+//            System.out.println(url.getFile());
+//        }
         fileServer.start();
+    }
+
+    @Override
+    public void setStartParams(Map<String, String> startParams) {
+        startParams.put(ServerStartParamsAware.PORT,startParams.getOrDefault("port", "8585"));
+        startParams.put(ServerStartParamsAware.BASEDIR,new File(startParams.getOrDefault("basedir", "/files/")).getAbsolutePath()+File.separator);
+        startParams.put(ServerStartParamsAware.THRESHOLD,startParams.getOrDefault("threshold", "1048576"));
+        this.startParams = startParams;
+        this.port = Integer.valueOf(startParams.get("port"));
+        this.baseDir = startParams.get("basedir");
+        this.compressThreshold = Long.valueOf(startParams.get("threshold"));
+
+        handlerDispatcher.setServerStartParams(startParams);
+        handlerDispatcher.setServer(this);
+
+        String basePackage = startParams.get("basepackage");
+        if(basePackage != null) {
+            handlerDispatcher.scanAndRegisterHandlerMethods(basePackage);
+        }
     }
 }

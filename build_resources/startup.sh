@@ -17,6 +17,7 @@ elif [ "$1" = '--version' ]; then
 fi
 
 classpath=${classpath}
+cd `dirname $0`
 
 #include the jars under lib directory
 for jar in `ls ../lib/*.jar`
@@ -32,4 +33,20 @@ done
 
 classpath=.:$jars$classpath
 
-exec java -cp $classpath com.heartbridge.server.FileServer $*
+#check if should run in deamon modal
+for arg in "$@"
+do
+echo "$arg" 
+if [ "$arg"='--deamon=on' ]; then
+  deamon=true 
+  break
+fi
+done
+ 
+echo "$deamon"
+
+if [ $deamon ]; then
+  java -cp $classpath com.heartbridge.server.FileServer $*
+else
+  (java -cp $classpath com.heartbridge.server.FileServer $* &)
+fi

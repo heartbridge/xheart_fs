@@ -24,5 +24,17 @@ for %%i in (*.jar) do set jars=!jars!%%~fi;
 
 set classpath=.;!jars!%classpath%
 echo %classpath%
-start java -cp %classpath% com.heartbridge.server.FileServer %*
+
+::here check whether the file server should run in deamon way
+:loop
+if '%1'=='--deamon' (
+	if '%2' == 'on' (
+		start java -cp %classpath% com.heartbridge.fs.Application %*
+	) else (
+		java -cp %classpath% com.heartbridge.fs.Application %*
+	)
+) else if "%1"=="" (
+	start java -cp %classpath% com.heartbridge.fs.Application %*
+) else (shift /1&goto :loop)
+
 endlocal

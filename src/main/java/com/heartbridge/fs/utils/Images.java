@@ -1,7 +1,7 @@
-package com.heartbridge.utils;
+package com.heartbridge.fs.utils;
 
 
-import com.heartbridge.exception.ApplicationRunTimeException;
+import com.heartbridge.fs.exception.ApplicationRunTimeException;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;

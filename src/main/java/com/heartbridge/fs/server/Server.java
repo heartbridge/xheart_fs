@@ -1,6 +1,7 @@
-package com.heartbridge.server;
+package com.heartbridge.fs.server;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 /**
  * @author GavinCook
@@ -22,7 +23,7 @@ public interface Server {
      * get the server's start parameters
      * @return server's start parameters
      */
-    String getStartParams();
+    Map<String,String> getStartParams();
 
     /**
      * get the server's name
@@ -35,4 +36,10 @@ public interface Server {
      * @return server's start time
      */
     LocalDateTime getStartTime();
+
+    /**
+     * get the server listen port
+     * @return server's port
+     */
+    int getPort();
 }

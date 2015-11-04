@@ -13,6 +13,7 @@ repositories {
 
 dependencies {
     compile group: 'io.netty', name: 'netty-all', version: '4.0.30.Final'
+    compile group: 'com.fasterxml.jackson.core', name:'jackson-databind', version:'2.4.3'
 }
 
 /*build one jar for the classes and all dependencies*/
@@ -23,7 +24,7 @@ task jarWithDependencies(type: Jar) {
     manifest {
         attributes 'Implementation-Title': 'Gradle Quickstart'
         attributes 'Implementation-Version': version
-        attributes 'Main-Class': 'com.heartbridge.server.FileServer'
+        attributes 'Main-Class': 'com.heartbridge.fs.Application'
     }
     baseName rootProject.name+'-jar-with-dependencies'
 }
@@ -40,6 +41,7 @@ task copyBin(type: Copy,dependsOn:'makeServerDir') {
     from ('build_resources') {
         exclude '*.conf'
     }
+    println serverDir
     into serverDir+File.separator+"bin"
 }
 

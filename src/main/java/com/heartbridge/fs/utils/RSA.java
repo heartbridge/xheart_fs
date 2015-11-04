@@ -1,4 +1,4 @@
-package com.heartbridge.utils;
+package com.heartbridge.fs.utils;
 
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;

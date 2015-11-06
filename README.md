@@ -168,3 +168,49 @@ xheart 文件服务器支持Spring风格的插件扩展，可以自定义处理�
 * 通道上下文：`io.netty.channel.ChannelHandlerContext` 
 * Http请求：`io.netty.handler.codec.http.HttpRequest`
 
+#### 自定义处理器示例
+1.首先添加依赖
+```
+<dependency>
+    <groupId>com.heartbridge</groupId>
+    <artifactId>xheart_fs</artifactId>
+    <version>${xheart_fs.version}</version>
+</dependency>
+```
+_目前最新版本为：1.0.1_
+
+并添加远程镜像地址：
+```
+<repository>
+    <id>nexus</id>
+    <name>nexus releases</name>
+    <url>http://nexus.xheart.cn:8081/content/repositories/releases/</url>
+</repository>
+```
+2.自定义处理器
+```
+package com.heartbridge.helloworld;
+
+import com.heartbridge.fs.annotation.Handler;
+import com.heartbridge.fs.annotation.RequestMapping;
+
+@Handler
+public class SampleHandler {
+
+    @RequestMapping(value = "/hello")
+    public String hello(){
+        return "Hello, xheart_fs";
+    }
+}
+```
+
+这里定义了一个示例处理器（@Handler标识），并且将`hello`方法映射为`/hello`的请求地址的处理方法。也即：当访问`/hello`时，返回字符串：`Hello, xheart_fs`
+
+3.启动
+服务器主类为：`com.heartbridge.fs.Application`, 并且在启动时需要指定需要扫描的处理器的基础包名(`--basePackage`指定)。在本示例中, 示例处理器在`com.heartbridge`基础包下，启动命令如下：
+`java  com.heartbridge.fs.Application --basePackage com.heartbridge`
+
+更多启动参数参见：[启动参数](https://github.com/heartbridge/xheart_fs#快速启动)
+
+4.测试
+打开浏览器，访问`http://loalhost:8585/hello`

@@ -4,14 +4,43 @@
     <groupId>com.heartbridge</groupId>
     <artifactId>xheart_fs</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.0</version>
-    <name>xheart_fs</name>
+    <version>1.0.1</version>
+    <name>com.heartbridge:xheart_fs</name>
+    <description>A file server based on netty</description>
     <url>http://maven.apache.org</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.version>1.0.0</project.version>
+        <project.version>1.0.1</project.version>
     </properties>
+
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>gavincook</name>
+            <email>swbyzx@gmail.com</email>
+            <organization>heartbridge</organization>
+            <organizationUrl>https://github.com/heartbridge</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>
+            scm:git@github.com:heartbridge/xheart_fs.git
+        </connection>
+        <developerConnection>
+            scm:git@github.com:heartbridge/xheart_fs.git
+        </developerConnection>
+        <url>https://github.com/heartbridge/xheart_fs</url>
+        <tag>v1.0.1</tag>
+    </scm>
 
     <build>
         <plugins>
@@ -31,7 +60,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <!--打包可执行jar,包含所有的依赖-->
+            <!--package with dependencies-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -90,14 +119,11 @@
                         <phase>package</phase>
                         <configuration>
                             <target>
-                                <property name="confDir" location="${project.build.directory}/${project.artifactId}${version}/conf" />
                                 <property name="binDir" location="${project.build.directory}/${project.artifactId}${version}/bin" />
                                 <property name="libDir" location="${project.build.directory}/${project.artifactId}${version}/lib" />
-                                <mkdir dir="${confDir}" />
                                 <mkdir dir="${binDir}" />
                                 <mkdir dir="${libDir}" />
                                 <copy file="${io.netty:netty-all:jar}" toDir="${libDir}"/>
-                                <copy file="build_resources/plugin.conf" toDir="${confDir}"/>
                                 <copy file="${project.build.directory}/${project.artifactId}-${project.version}.jar" toFile="${binDir}/${project.artifactId}.jar"/>
                                 <copy file="build_resources/startup.bat" toDir="${binDir}"/>
                                 <copy file="build_resources/startup.sh" toDir="${binDir}"/>

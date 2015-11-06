@@ -33,19 +33,19 @@ done
 
 classpath=.:$jars$classpath
 
-#check if should run in deamon modal
+#check if should run in daemon modal
 for arg in "$@"
 do
 echo "$arg" 
-if [ "$arg"='--deamon=on' ]; then
-  deamon=true 
+if [ "$arg"='--daemon=on' ]; then
+  daemon=true
   break
 fi
 done
  
-echo "$deamon"
+echo "daemon"
 
-if [ $deamon ]; then
+if [ $daemon ]; then
   java -cp $classpath com.heartbridge.server.FileServer $*
 else
   (java -cp $classpath com.heartbridge.server.FileServer $* &)

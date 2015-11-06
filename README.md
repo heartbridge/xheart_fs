@@ -22,7 +22,9 @@
 
 `--deny`:不允许访问的IP正则表达式，默认无黑名单
 
-`--deamon`:是否以守护线程运行.如果需要以守护线程运行，请使用`--deamon=on`，默认为主线程
+`--daemon`:是否以守护线程运行.如果需要以守护线程运行，请使用`--daemon=on`，默认为主线程
+
+`--basePackage`:需要扫描的基础包，用于扫描注册处理器`@Handler`
 
 亦可以使用`startup.bat --help`或`./startup.sh --help`查看支持的参数
 
@@ -148,14 +150,21 @@ xheart_fs提供了服务器管理功能。
 2、如果设置了白名单（allow），则进行白名单规则匹配，如果匹配成功则继续交给下一个处理器处理，否则返回`403`状态。如果没有设置白名单，把请求直接交给下一个处理器。
 
 ### 进阶
-xheart 文件服务器支持插件扩展，可以自定义通道处理器(ChannelHandler)，从而自定义处理流程。
+xheart 文件服务器支持Spring风格的插件扩展，可以自定义处理器，从而自定义处理流程。
 在使用`mvn clean package`进行构建的时候，在构建目录下会生成一个xheart_fs{version}的文件夹。（version代表版本号，目前版本为1.0.0）
-该目录下有三个文件夹，`bin`，`lib`和`conf`。
+该目录下有两个文件夹，`bin`，`lib`。
 
 * bin: 包含了`startup.bat`、`startup.sh`和`xheart_fs.jar`,用于启动整个文件服务器，应当始终使用`startup.bat`或`startup.sh`进行服务器启动。
 
 * lib: 其它依赖的jar包都存放在该目录，比如netty依赖包
 
-* conf: 配置存放文件夹，目前包含：`plugin.conf`文件，该文件主要用于配置需要加载的插件的具体类名。如果有多个插件类，使用一行一个类名的格式即可。
+### 插件开发
 
+支持Spring注解风格的处理器（插件）。将处理器的类使用`@Handler`标识，用`@RequestMapping`标识具体的处理方法。具体的处理方法支持使用`@RequestParam`注解接收对应的参数。
+
+其中`@RequestParam`注解可以注入的值包括：
+
+* 请求中的参数（支持字符参数和文件参数，形式支持单个参数、参数数组、参数集合，暂不支持实体对象参数）
+* 通道上下文：`io.netty.channel.ChannelHandlerContext` 
+* Http请求：`io.netty.handler.codec.http.HttpRequest`
 

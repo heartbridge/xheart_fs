@@ -27,7 +27,7 @@ echo %classpath%
 
 ::here check whether the file server should run in deamon way
 :loop
-if '%1'=='--deamon' (
+if '%1'=='--daemon' (
 	if '%2' == 'on' (
 		start java -cp %classpath% com.heartbridge.fs.Application %*
 	) else (

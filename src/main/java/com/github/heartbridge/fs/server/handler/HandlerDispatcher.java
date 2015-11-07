@@ -442,43 +442,47 @@ public class HandlerDispatcher extends SimpleChannelInboundHandler<HttpObject> {
     private void handlePostMethod(HttpPostRequestDecoder decoder){
         Map<String,String[]> params = this.paramsHolder.get();
         Map<String,List<FileUpload>> files = this.files.get();
-        while (decoder.hasNext()) {
-            InterfaceHttpData data = decoder.next();
-            if (data != null) {
-                if (data.getHttpDataType() == InterfaceHttpData.HttpDataType.Attribute) {//handle the form parameter
-                    Attribute attribute = (Attribute) data;
-                    try {
-                        String name = attribute.getName();
-                        if(params.containsKey(name)){//如果已经存在该参数，则叠加到以前的参数值里
-                            String[] oldValue = params.get(name);
-                            String[] newValue = new String[oldValue.length+1];
-                            System.arraycopy(oldValue,0,newValue,0,oldValue.length);
-                            newValue[newValue.length-1] = attribute.getValue();
-                            params.put(attribute.getName(),newValue);
-                        }else{
-                            params.put(attribute.getName(),new String[]{attribute.getValue()});
-                        }
-
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                        return;
-                    }finally {
-                        data.release();
-                    }
-                } else {//handle file
-                    if (data.getHttpDataType() == InterfaceHttpData.HttpDataType.FileUpload) {
-                        FileUpload fileUpload = (FileUpload) data;
-                        if(fileUpload.isCompleted()){
-                            List<FileUpload> fileList = files.get(fileUpload.getName());
-                            if(fileList == null){
-                                fileList = new ArrayList<>();
-                                files.put(fileUpload.getName(), fileList);
+        try {
+            while (decoder.hasNext()) {
+                InterfaceHttpData data = decoder.next();
+                if (data != null) {
+                    if (data.getHttpDataType() == InterfaceHttpData.HttpDataType.Attribute) {//handle the form parameter
+                        Attribute attribute = (Attribute) data;
+                        try {
+                            String name = attribute.getName();
+                            if (params.containsKey(name)) {//如果已经存在该参数，则叠加到以前的参数值里
+                                String[] oldValue = params.get(name);
+                                String[] newValue = new String[oldValue.length + 1];
+                                System.arraycopy(oldValue, 0, newValue, 0, oldValue.length);
+                                newValue[newValue.length - 1] = attribute.getValue();
+                                params.put(attribute.getName(), newValue);
+                            } else {
+                                params.put(attribute.getName(), new String[]{attribute.getValue()});
                             }
-                            fileList.add(fileUpload);
+
+                        } catch (IOException e1) {
+                            e1.printStackTrace();
+                            return;
+                        } finally {
+                            data.release();
+                        }
+                    } else {//handle file
+                        if (data.getHttpDataType() == InterfaceHttpData.HttpDataType.FileUpload) {
+                            FileUpload fileUpload = (FileUpload) data;
+                            if (fileUpload.isCompleted()) {
+                                List<FileUpload> fileList = files.get(fileUpload.getName());
+                                if (fileList == null) {
+                                    fileList = new ArrayList<>();
+                                    files.put(fileUpload.getName(), fileList);
+                                }
+                                fileList.add(fileUpload);
+                            }
                         }
                     }
                 }
             }
+        }catch (HttpPostRequestDecoder.EndOfDataDecoderException e){
+            logger.log(Level.INFO, "END OF CONTENT CHUNK BY CHUNK");
         }
     }
 

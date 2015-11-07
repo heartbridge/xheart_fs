@@ -24,7 +24,7 @@ task jarWithDependencies(type: Jar) {
     manifest {
         attributes 'Implementation-Title': 'Gradle Quickstart'
         attributes 'Implementation-Version': version
-        attributes 'Main-Class': 'com.heartbridge.fs.Application'
+        attributes 'Main-Class': 'Application'
     }
     baseName rootProject.name+'-jar-with-dependencies'
 }

@@ -1,11 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.heartbridge</groupId>
+    <groupId>com.github.heartbridge</groupId>
     <artifactId>xheart_fs</artifactId>
     <packaging>jar</packaging>
     <version>1.0.1</version>
-    <name>com.heartbridge:xheart_fs</name>
+    <name>com.github.heartbridge:xheart_fs</name>
     <description>A file server based on netty</description>
     <url>http://maven.apache.org</url>
 
@@ -68,7 +68,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.heartbridge.fs.Application</mainClass>
+                            <mainClass>com.github.heartbridge.fs.Application</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
@@ -181,4 +181,12 @@
             <version>2.4.3</version>
         </dependency>
     </dependencies>
+
+    <distributionManagement>
+        <repository>
+            <id>releases</id>
+            <name>nexus releases</name>
+            <url>http://nexus.xheart.cn:8081/content/repositories/releases/</url>
+        </repository>
+    </distributionManagement>
 </project>

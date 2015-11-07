@@ -172,7 +172,7 @@ xheart 文件服务器支持Spring风格的插件扩展，可以自定义处理�
 1.首先添加依赖
 ```
 <dependency>
-    <groupId>com.heartbridge</groupId>
+    <groupId>com.github.heartbridge</groupId>
     <artifactId>xheart_fs</artifactId>
     <version>${xheart_fs.version}</version>
 </dependency>
@@ -191,8 +191,8 @@ _目前最新版本为：1.0.1_
 ```
 package com.heartbridge.helloworld;
 
-import com.heartbridge.fs.annotation.Handler;
-import com.heartbridge.fs.annotation.RequestMapping;
+import Handler;
+import RequestMapping;
 
 @Handler
 public class SampleHandler {
@@ -207,8 +207,8 @@ public class SampleHandler {
 这里定义了一个示例处理器（@Handler标识），并且将`hello`方法映射为`/hello`的请求地址的处理方法。也即：当访问`/hello`时，返回字符串：`Hello, xheart_fs`
 
 3.启动
-服务器主类为：`com.heartbridge.fs.Application`, 并且在启动时需要指定需要扫描的处理器的基础包名(`--basePackage`指定)。在本示例中, 示例处理器在`com.heartbridge`基础包下，启动命令如下：
-`java  com.heartbridge.fs.Application --basePackage com.heartbridge`
+服务器主类为：`Application`, 并且在启动时需要指定需要扫描的处理器的基础包名(`--basePackage`指定)。在本示例中, 示例处理器在`com.heartbridge`基础包下，启动命令如下：
+`java  Application --basePackage com.heartbridge`
 
 更多启动参数参见：[启动参数](https://github.com/heartbridge/xheart_fs#快速启动)
 

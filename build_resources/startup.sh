@@ -1,5 +1,4 @@
 #!/bin/sh
-
 if [ "$1" = '--help' ]; then
   echo xheart file server : 1.0.0
   echo --port      : file server listen port, default 8585
@@ -46,7 +45,7 @@ done
 echo "daemon"
 
 if [ $daemon ]; then
-  java -cp $classpath com.heartbridge.server.FileServer $*
+  java -cp $classpath com.github.heartbridge.fs.Application $*
 else
-  (java -cp $classpath com.heartbridge.server.FileServer $* &)
+  (java -cp $classpath com.github.heartbridge.fs.Application $* &)
 fi

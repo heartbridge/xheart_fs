@@ -54,7 +54,7 @@ public class FileUploadHandler implements ServerStartParamsAware{
             response.headers().add(CONTENT_TYPE, contentType);
             byte[] data = new byte[10240];
             int length;
-            try (FileInputStream in = new FileInputStream(new File("E:/files",fileName))) {
+            try (FileInputStream in = new FileInputStream(new File(baseDir,fileName))) {
                 System.out.println(in.available());
                 response.headers().add(CONTENT_LENGTH, in.available());
                 while ((length = in.read(data)) != -1) {

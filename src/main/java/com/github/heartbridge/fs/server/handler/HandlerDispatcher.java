@@ -13,13 +13,10 @@ import com.github.heartbridge.fs.server.ServerStartParamsAware;
 import com.github.heartbridge.fs.utils.ClassScanner;
 import com.github.heartbridge.fs.utils.Parameters;
 import com.github.heartbridge.fs.utils.TypeConvertor;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 import io.netty.handler.codec.http.multipart.*;
-import io.netty.util.CharsetUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +29,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import static io.netty.buffer.Unpooled.copiedBuffer;
 import static io.netty.handler.codec.http.HttpHeaders.Names.*;
 
 /**
@@ -63,6 +59,8 @@ public class HandlerDispatcher extends SimpleChannelInboundHandler<HttpObject> {
 
     private ThreadLocal<HttpRequest> requestHolder = new ThreadLocal<>();
 
+    private ThreadLocal<FullHttpResponse> responseHolder = new ThreadLocal<>();
+
     private ThreadLocal<HttpPostRequestDecoder> decoderHolder = new ThreadLocal<>();
 
     private Server server;
@@ -81,17 +79,18 @@ public class HandlerDispatcher extends SimpleChannelInboundHandler<HttpObject> {
         super.channelRegistered(ctx);
         paramsHolder.set(new HashMap<>());
         files.set(new HashMap<>());
+        responseHolder.set(response(HttpResponseStatus.OK));
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         super.exceptionCaught(ctx, cause);
         cause.printStackTrace();
+        json(ctx, responseHolder.get(), cause.getMessage());
     }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, HttpObject msg) throws Exception {
-        Channel channel = ctx.channel();
         if (msg instanceof HttpRequest) {
             HttpRequest request = (HttpRequest) msg;
             requestHolder.set(request);
@@ -124,33 +123,36 @@ public class HandlerDispatcher extends SimpleChannelInboundHandler<HttpObject> {
                     }
                 }
 
-            } catch (HttpPostRequestDecoder.ErrorDataDecoderException e1) {
-                e1.printStackTrace();
-                json(channel, requestHolder.get(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
-            } catch (HttpPostRequestDecoder.IncompatibleDataDecoderException e1) {
-                json(channel, requestHolder.get(), HttpResponseStatus.INTERNAL_SERVER_ERROR, e1.getMessage());
+            } catch (HttpPostRequestDecoder.ErrorDataDecoderException|HttpPostRequestDecoder.IncompatibleDataDecoderException e) {
+                FullHttpResponse response = response(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                e.printStackTrace();
+                json(ctx, response, e.getMessage());
             }
         }
     }
 
     protected void invokeAndResponse(ChannelHandlerContext ctx) throws InvocationTargetException, IllegalAccessException, JsonProcessingException {
         HttpRequest request = requestHolder.get();
+        FullHttpResponse response = responseHolder.get();
         try {
 
             HandlerMethod handlerMethod = lookupHandlerMethod(request);
             Object result = invokeHandlerMethod(ctx, handlerMethod);
+            keepAliveIfNecessary(request, response);
+
             if(result instanceof String){
-                json(ctx.channel(), request, HttpResponseStatus.OK, (String) result);
+                json(ctx, response, (String) result);
             }else if(result instanceof Void || result == null){
-                json(ctx.channel(), request, HttpResponseStatus.OK);
+                //json(ctx.channel(), request, HttpResponseStatus.OK);
             }else{
-                json(ctx.channel(), request, HttpResponseStatus.OK, mapper.writeValueAsString(result));
+                json(ctx, response, mapper.writeValueAsString(result));
             }
         }catch (NoMatchedMethodFoundException e){
             logger.log(Level.WARNING, e.getMessage());
-            json(ctx.channel(), request, HttpResponseStatus.NOT_FOUND);
+            response.setStatus(HttpResponseStatus.NOT_FOUND);
+            json(ctx, response);
         }finally {
-            ctx.channel().close();
+            flush(ctx, false);
         }
     }
 
@@ -218,7 +220,7 @@ public class HandlerDispatcher extends SimpleChannelInboundHandler<HttpObject> {
         }
 
         HandlerMethod method = matchMethods.iterator().next();
-        System.out.println("Found "+method.getMethod().getName()+" for :"+lookupPath);
+        System.out.println("Found " + method.getMethod().getName() + " for :" + lookupPath);
         return method;
     }
 
@@ -319,6 +321,10 @@ public class HandlerDispatcher extends SimpleChannelInboundHandler<HttpObject> {
         if(HttpRequest.class == parameterType){
             return requestHolder.get();
         }
+        if(HttpResponse.class == parameterType || FullHttpResponse.class == parameterType || DefaultFullHttpResponse.class == parameterType){
+            return responseHolder.get();
+        }
+
         RequestParam requestParam = parameter.getAnnotation(RequestParam.class);
         if(requestParam != null){
             String[] defaultValue = new String[]{RequestParam.DEFAULT_NONE.equals(requestParam.defaultValue())? null : requestParam.defaultValue()};
@@ -488,28 +494,43 @@ public class HandlerDispatcher extends SimpleChannelInboundHandler<HttpObject> {
 
     /**
      * not support the http request
-     * @param channel request channel
+     * @param ctx channelHandlerContext
      */
-    private void json(Channel channel, HttpRequest request, HttpResponseStatus status, String responseText){
-        ByteBuf buf = responseText == null?Unpooled.buffer(0) :copiedBuffer(responseText, CharsetUtil.UTF_8);
-        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status,buf);
+    private void json(ChannelHandlerContext ctx, FullHttpResponse response, String responseText){
         response.headers().set(CONTENT_TYPE, "application/json; charset=UTF-8");
-        response.headers().add("Access-Control-Allow-Origin", "*");
-        addRequestCookiesToResponse(request, response);
-
-        ChannelFuture future = channel.writeAndFlush(response);
-        future.addListener(ChannelFutureListener.CLOSE);
-        channel.close();
+        response.headers().add(HttpHeaders.Names.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+        if(responseText != null) {
+            System.out.println(responseText);
+            response.content().writeBytes(responseText.getBytes());
+        }
+        ctx.write(response);
+        flush(ctx, true);
     }
 
     /**
      * not support the http request
-     * @param channel request channel
+     * @param ctx channelHandlerContext
      */
-    private void json(Channel channel, HttpRequest request, HttpResponseStatus status){
-        json(channel, request, status, null);
+    private void json(ChannelHandlerContext ctx,FullHttpResponse response){
+        json(ctx, response, null);
     }
 
+    private FullHttpResponse response(HttpResponseStatus status){
+        return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);
+    }
+
+    private void keepAliveIfNecessary(HttpRequest request, HttpResponse response){
+        if (HttpHeaders.isKeepAlive(request)) {
+            response.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
+        }
+    }
+
+    private void flush(ChannelHandlerContext ctx, boolean forceClose){
+        ChannelFuture lastContentFuture = ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+        if (forceClose || !HttpHeaders.isKeepAlive(requestHolder.get())) {
+            lastContentFuture.addListener(ChannelFutureListener.CLOSE);
+        }
+    }
     /**
      * add request cookies to response
      */

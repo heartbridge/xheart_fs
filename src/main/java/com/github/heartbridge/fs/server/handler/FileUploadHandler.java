@@ -1,15 +1,13 @@
 package com.github.heartbridge.fs.server.handler;
 
+import com.github.heartbridge.fs.Application;
 import com.github.heartbridge.fs.annotation.RequestMapping;
 import com.github.heartbridge.fs.annotation.RequestMethod;
 import com.github.heartbridge.fs.annotation.RequestParam;
+import com.github.heartbridge.fs.exception.ApplicationRunTimeException;
 import com.github.heartbridge.fs.server.ServerStartParamsAware;
-import com.github.heartbridge.fs.utils.FileUtils;
-import com.github.heartbridge.fs.utils.Images;
-import com.github.heartbridge.fs.utils.Maps;
-import com.github.heartbridge.fs.utils.TypeConvertor;
+import com.github.heartbridge.fs.utils.*;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.multipart.FileUpload;
@@ -21,11 +19,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URLConnection;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static io.netty.buffer.Unpooled.copiedBuffer;
 import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_LENGTH;
 import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 
@@ -45,29 +44,26 @@ public class FileUploadHandler implements ServerStartParamsAware{
     private String fileSeparatorRegex = File.separator.equals("\\") ? "\\\\" : "/";
 
     @RequestMapping(value = "/.*", method = RequestMethod.GET)
-    public void getFile(HttpRequest request, ChannelHandlerContext ctx){
-        System.out.println(request.getUri());
+    public void getFile(HttpRequest request, ChannelHandlerContext ctx, FullHttpResponse response){
         String fileName = request.getUri();
-        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+        System.out.println(fileName);
         String contentType = URLConnection.guessContentTypeFromName(fileName);
         if(contentType != null) {
             response.headers().add(CONTENT_TYPE, contentType);
             byte[] data = new byte[10240];
             int length;
             try (FileInputStream in = new FileInputStream(new File(baseDir,fileName))) {
-                System.out.println(in.available());
                 response.headers().add(CONTENT_LENGTH, in.available());
                 while ((length = in.read(data)) != -1) {
                     response.content().writeBytes(data, 0, length);
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new ApplicationRunTimeException(e);
             }
+        }else{
+            throw new ApplicationRunTimeException("contentType is valid");
         }
-
-        ChannelFuture future = ctx.channel().writeAndFlush(response);
-        future.addListener(ChannelFutureListener.CLOSE);
-        ctx.channel().close();
+        ctx.channel().write(response);
     }
 
     @RequestMapping(value = "/", method = RequestMethod.POST)
@@ -86,8 +82,8 @@ public class FileUploadHandler implements ServerStartParamsAware{
                 File out = FileUtils.getFileNotExists(f);
                 FileUtils.createIfNotExists(out.getAbsolutePath(), false);
 
-                String contentType = URLConnection.guessContentTypeFromName(fileUpload.getName());
-                if(contentType != null && contentType.contains("images")) {//handle image
+                String contentType = fileUpload.getContentType();
+                if(contentType != null && contentType.contains("image")) {//handle image
                     File originImageFile = FileUtils.createIfNotExists(out.getParent() + File.separator + "origin_" + out.getName(), false);
                     FileUtils.save(data,originImageFile);//direct save the origin image, avoid red mask when use ImageIO
                     logger.log(Level.INFO, "[origin]file saved at {0}",originImageFile.getAbsoluteFile());

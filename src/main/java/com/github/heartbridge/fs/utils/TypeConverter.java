@@ -4,7 +4,7 @@ package com.github.heartbridge.fs.utils;
  * @author GavinCook
  * @since 1.0.0
  **/
-public class TypeConvertor {
+public class TypeConverter {
 
 
     public static String toString(Object o){

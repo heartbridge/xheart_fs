@@ -23,7 +23,7 @@ public class Maps {
                 length--;//ignore the last one when pass odd parameters
             }
             for(int i=0;i<length;){
-                m.put(TypeConvertor.toString(params[i++]), params[i++]);
+                m.put(TypeConverter.toString(params[i++]), params[i++]);
             }
         }
         return m;

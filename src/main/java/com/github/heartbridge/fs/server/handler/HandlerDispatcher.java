@@ -12,7 +12,8 @@ import com.github.heartbridge.fs.server.ServerAware;
 import com.github.heartbridge.fs.server.ServerStartParamsAware;
 import com.github.heartbridge.fs.utils.ClassScanner;
 import com.github.heartbridge.fs.utils.Parameters;
-import com.github.heartbridge.fs.utils.TypeConvertor;
+import com.github.heartbridge.fs.utils.TypeConverter;
+import com.github.heartbridge.fs.utils.WebResponse;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
@@ -86,7 +87,8 @@ public class HandlerDispatcher extends SimpleChannelInboundHandler<HttpObject> {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         super.exceptionCaught(ctx, cause);
         cause.printStackTrace();
-        json(ctx, responseHolder.get(), cause.getMessage());
+        cause = cause.getCause() == null ? cause : cause.getCause();
+        json(ctx, responseHolder.get(), WebResponse.fail(cause.getLocalizedMessage()));
     }
 
     @Override
@@ -124,9 +126,10 @@ public class HandlerDispatcher extends SimpleChannelInboundHandler<HttpObject> {
                 }
 
             } catch (HttpPostRequestDecoder.ErrorDataDecoderException|HttpPostRequestDecoder.IncompatibleDataDecoderException e) {
-                FullHttpResponse response = response(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                FullHttpResponse response = responseHolder.get();
                 e.printStackTrace();
-                json(ctx, response, e.getMessage());
+                Throwable cause = e.getCause() == null ? e : e.getCause();
+                json(ctx, response, WebResponse.fail(cause.getMessage()));
             }
         }
     }
@@ -152,7 +155,7 @@ public class HandlerDispatcher extends SimpleChannelInboundHandler<HttpObject> {
             response.setStatus(HttpResponseStatus.NOT_FOUND);
             json(ctx, response);
         }finally {
-            flush(ctx, false);
+//            flush(ctx, false);
         }
     }
 
@@ -190,8 +193,8 @@ public class HandlerDispatcher extends SimpleChannelInboundHandler<HttpObject> {
 
     /**
      * lookup the best matched method for http request
-     * @param request
-     * @return
+     * @param request the request
+     * @return the matched method
      */
     public HandlerMethod lookupHandlerMethod(HttpRequest request){
         String lookupPath = request.getUri();
@@ -334,15 +337,15 @@ public class HandlerDispatcher extends SimpleChannelInboundHandler<HttpObject> {
             if(String[].class == parameterType){
                 return paramsHolder.get().getOrDefault(paramName, defaultValue);
             }else if(int[].class == parameterType || Integer[].class == parameterType){
-                return TypeConvertor.toIntegerArray(paramsHolder.get().getOrDefault(paramName, defaultValue));
+                return TypeConverter.toIntegerArray(paramsHolder.get().getOrDefault(paramName, defaultValue));
             }else if(long[].class == parameterType || Long[].class == parameterType){
-                return TypeConvertor.toLongArray(paramsHolder.get().getOrDefault(paramName, defaultValue));
+                return TypeConverter.toLongArray(paramsHolder.get().getOrDefault(paramName, defaultValue));
             }else if(double[].class ==  parameterType || Double[].class == parameterType){
-                return TypeConvertor.toDoubleArray(paramsHolder.get().getOrDefault(paramName, defaultValue));
+                return TypeConverter.toDoubleArray(paramsHolder.get().getOrDefault(paramName, defaultValue));
             }else if(float[].class == parameterType || Float[].class == parameterType){
-                return TypeConvertor.toFloatArray(paramsHolder.get().getOrDefault(paramName, defaultValue));
+                return TypeConverter.toFloatArray(paramsHolder.get().getOrDefault(paramName, defaultValue));
             }else if(boolean[].class == parameterType || Boolean[].class == parameterType){
-                return TypeConvertor.toBooleanArray(paramsHolder.get().getOrDefault(paramName, defaultValue));
+                return TypeConverter.toBooleanArray(paramsHolder.get().getOrDefault(paramName, defaultValue));
             }else if(FileUpload[].class == parameterType){
                 List<FileUpload> fileUploads = files.get().get(paramName);
                 if(fileUploads != null && !fileUploads.isEmpty()) {
@@ -379,15 +382,15 @@ public class HandlerDispatcher extends SimpleChannelInboundHandler<HttpObject> {
                     if(String.class == clazz){
                         return Arrays.asList(arrayParams);
                     } else if (int.class == clazz || Integer.class == clazz) {
-                        return Arrays.asList(TypeConvertor.toIntegerArray(arrayParams));
+                        return Arrays.asList(TypeConverter.toIntegerArray(arrayParams));
                     }else if (long.class == clazz || Long.class == clazz) {
-                        return  Arrays.asList(TypeConvertor.toLongArray(arrayParams));
+                        return  Arrays.asList(TypeConverter.toLongArray(arrayParams));
                     }else if (double.class ==  clazz || Double.class == clazz) {
-                        return  Arrays.asList(TypeConvertor.toDoubleArray(arrayParams));
+                        return  Arrays.asList(TypeConverter.toDoubleArray(arrayParams));
                     }else if (float.class == clazz || Float.class == clazz) {
-                        return  Arrays.asList(TypeConvertor.toFloatArray(arrayParams));
+                        return  Arrays.asList(TypeConverter.toFloatArray(arrayParams));
                     }else if (boolean.class == clazz || Boolean.class == clazz) {
-                        return  Arrays.asList(TypeConvertor.toBooleanArray(arrayParams));
+                        return  Arrays.asList(TypeConverter.toBooleanArray(arrayParams));
                     }else if(FileUpload.class == clazz){
                         return files.get().get(paramName);
                     }else if(File.class == clazz){
@@ -411,15 +414,15 @@ public class HandlerDispatcher extends SimpleChannelInboundHandler<HttpObject> {
             }else if(String.class == parameterType){
                 return value;
             } else if (int.class == parameterType || Integer.class == parameterType) {
-                return TypeConvertor.toInteger(value);
+                return TypeConverter.toInteger(value);
             }else if (long.class == parameterType || Long.class == parameterType) {
-                return TypeConvertor.toLong(value);
+                return TypeConverter.toLong(value);
             }else if (double.class == parameterType || Double.class == parameterType) {
-                return TypeConvertor.toDouble(value);
+                return TypeConverter.toDouble(value);
             }else if (float.class == parameterType || Float.class == parameterType) {
-                return TypeConvertor.toFloat(value);
+                return TypeConverter.toFloat(value);
             }else if (boolean.class == parameterType || Boolean.class == parameterType) {
-                return TypeConvertor.toBoolean(value);
+                return TypeConverter.toBoolean(value);
             }else if(FileUpload.class == parameterType){
                 List<FileUpload> fileUploads = files.get().get(paramName);
                 if(fileUploads == null || fileUploads.size() == 0){
@@ -496,11 +499,16 @@ public class HandlerDispatcher extends SimpleChannelInboundHandler<HttpObject> {
      * not support the http request
      * @param ctx channelHandlerContext
      */
-    private void json(ChannelHandlerContext ctx, FullHttpResponse response, String responseText){
+    private void json(ChannelHandlerContext ctx, FullHttpResponse response, Object result) throws JsonProcessingException {
         response.headers().set(CONTENT_TYPE, "application/json; charset=UTF-8");
         response.headers().add(HttpHeaders.Names.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-        if(responseText != null) {
-            System.out.println(responseText);
+        if(result != null) {
+            String responseText ;
+            if(result instanceof String){
+                responseText = (String) result;
+            }else{
+                responseText = mapper.writeValueAsString(result);
+            }
             response.content().writeBytes(responseText.getBytes());
         }
         ctx.write(response);
@@ -511,7 +519,7 @@ public class HandlerDispatcher extends SimpleChannelInboundHandler<HttpObject> {
      * not support the http request
      * @param ctx channelHandlerContext
      */
-    private void json(ChannelHandlerContext ctx,FullHttpResponse response){
+    private void json(ChannelHandlerContext ctx,FullHttpResponse response) throws JsonProcessingException {
         json(ctx, response, null);
     }
 

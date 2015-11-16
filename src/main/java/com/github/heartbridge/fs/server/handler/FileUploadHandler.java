@@ -1,13 +1,11 @@
 package com.github.heartbridge.fs.server.handler;
 
-import com.github.heartbridge.fs.Application;
 import com.github.heartbridge.fs.annotation.RequestMapping;
 import com.github.heartbridge.fs.annotation.RequestMethod;
 import com.github.heartbridge.fs.annotation.RequestParam;
 import com.github.heartbridge.fs.exception.ApplicationRunTimeException;
 import com.github.heartbridge.fs.server.ServerStartParamsAware;
 import com.github.heartbridge.fs.utils.*;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.multipart.FileUpload;
@@ -131,7 +129,7 @@ public class FileUploadHandler implements ServerStartParamsAware{
 
     @Override
     public void setStartParams(Map<String, String> startParams) {
-        this.threshold = TypeConvertor.toInteger(startParams.get(ServerStartParamsAware.THRESHOLD));
-        this.baseDir = TypeConvertor.toString(startParams.get(ServerStartParamsAware.BASEDIR));
+        this.threshold = TypeConverter.toInteger(startParams.get(ServerStartParamsAware.THRESHOLD));
+        this.baseDir = TypeConverter.toString(startParams.get(ServerStartParamsAware.BASEDIR));
     }
 }

@@ -23,7 +23,6 @@ public class ClassScanner {
      * scan the classes which under package with the param ${packageName}
      * @param packageName the package name what need search
      * @return the class collection
-     * @throws IOException
      */
     public static Set<Class> getClasses(String packageName) {
         packageName = packageName.replaceAll("\\.", "/");

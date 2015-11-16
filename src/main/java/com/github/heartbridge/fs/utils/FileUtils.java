@@ -125,7 +125,7 @@ public class FileUtils {
      * get the timestamp file path under the base directory
      * like :
      * <code>
-     * getTimestampPath("D:/upload")-->D:/upload/2015/02/10/12/25/30/
+     * getTimestampPath("D:/upload") = D:/upload/2015/02/10/12/25/30/
      * </code>
      *
      * @param baseDir the base directory
